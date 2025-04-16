@@ -1,11 +1,23 @@
 """Repository Collector für die effiziente Sammlung von GitHub-Repositories."""
 
 import os
-import json
-import logging
 import time
+import logging
+import json
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple, Iterator
+from dateutil import tz
+from typing import Dict, List, Tuple, Any, Optional, Iterator
+
+from github_collector.ui.progress import (
+    show_period_progress,
+    show_repositories_found,
+    show_period_too_large,
+    show_collection_progress,
+    show_collection_complete,
+    show_api_limit_reached,
+    show_max_repos_reached,
+    show_collection_summary
+)
 from dateutil import tz
 
 from .api.github_api import GitHubAPI, GitHubAPIError, GitHubRateLimitError
@@ -392,16 +404,12 @@ class RepositoryCollector:
                 logger.info(f"Gefunden: {total_count} Repositories in der Periode {start_date} bis {end_date}")
                 
                 # Zeige die Anzahl der gefundenen Repositories in dieser Periode an
-                print(f"- Repositories in dieser Periode gefunden: {total_count}")
+                show_repositories_found(total_count)
                 
                 # Prüfe, ob wir die Periode aufteilen müssen
                 if total_count > 1000:
-                    logger.warning(
-                        f"Zu viele Repositories in der Periode ({total_count}). "
-                        f"Teile die Periode in kleinere Zeitabschnitte auf."
-                    )
-                    print(f"\nZu viele Repositories in der Periode ({total_count}). "
-                          f"Teile die Periode in kleinere Zeitabschnitte auf.")
+                    # Zeige eine Meldung an, dass die Periode aufgeteilt werden muss
+                    show_period_too_large(total_count)
                     
                     # Teile die Periode auf und aktualisiere den Zustand
                     new_periods = self._adjust_period_size((start_date, end_date), total_count)
@@ -439,9 +447,8 @@ class RepositoryCollector:
                 # Wenn wir keine Ergebnisse mehr bekommen, aber noch nicht alle Repositories gesammelt haben,
                 # zeigen wir eine abschließende Fortschrittsmeldung an
                 if collected_count < total_count and collected_count > 0:
-                    progress_percent = round(collected_count * 100 / total_count, 1)
-                    print(f"- {collected_count}/{total_count} Repositories ({progress_percent}%)")
-                    logger.info(f"Gesammelt: {collected_count}/{total_count} Repositories ({progress_percent}%)")
+                    # Zeige den Sammlungsfortschritt an
+                    show_collection_progress(collected_count, total_count)
                 break
             
             # Verarbeite die Repositories dieser Seite
@@ -458,15 +465,15 @@ class RepositoryCollector:
                 
                 # Prüfe, ob wir das Maximum erreicht haben
                 if max_repos and total_collected >= max_repos:
-                    logger.info(f"Maximale Anzahl von Repositories erreicht: {max_repos}")
-                    print(f"\nMaximale Anzahl von Repositories erreicht: {max_repos}")
+                    # Zeige eine Meldung an, dass die maximale Anzahl erreicht wurde
+                    show_max_repos_reached(max_repos)
                     return collected_count
             
             # Zeige den Fortschritt in 100er-Schritten an
             if collected_count // 100 > last_count // 100 and total_count > 0:
                 last_count = collected_count
-                progress_percent = round(collected_count * 100 / total_count, 1)
-                print(f"- {collected_count}/{total_count} Repositories ({progress_percent}%)")
+                # Zeige den Sammlungsfortschritt an
+                show_collection_progress(collected_count, total_count)
             
             # Nächste Seite
             page += 1
@@ -479,15 +486,15 @@ class RepositoryCollector:
                 if collected_count > 0:
                     # Wenn wir alle Repositories gesammelt haben
                     if collected_count >= total_count:
-                        print(f"- {total_count}/{total_count} Repositories (100%)")
-                        logger.info(f"Alle {total_count} Repositories in dieser Periode wurden erfolgreich gesammelt.")
+                        # Zeige eine Meldung an, dass alle Repositories gesammelt wurden
+                        show_collection_complete(total_count)
                     # Wenn wir nicht alle Repositories sammeln konnten
                     else:
-                        progress_percent = round(collected_count * 100 / total_count, 1)
-                        print(f"- {collected_count}/{total_count} Repositories ({progress_percent}%)")
+                        # Zeige den Sammlungsfortschritt an
+                        show_collection_progress(collected_count, total_count)
                         if page > 10:
-                            logger.warning(f"GitHub API-Beschränkung erreicht: Maximal 1000 Ergebnisse (10 Seiten) können abgerufen werden.")
-                            print(f"Hinweis: GitHub API-Beschränkung erreicht. Nur die ersten 1000 Repositories konnten gesammelt werden.")
+                            # Zeige eine Meldung an, dass die API-Beschränkung erreicht wurde
+                            show_api_limit_reached()
                 break
             
             # Kurze Pause, um die API nicht zu überlasten
@@ -568,12 +575,8 @@ class RepositoryCollector:
             current_period_index = self.state.state.get("current_period_index", 0)
             total_periods = len(self.state.state.get("time_periods", []))
             
-            # Berechne den Gesamtfortschritt
-            overall_progress = 0
-            if total_periods > 0:
-                overall_progress = min(100, (current_period_index * 100) // total_periods)
-                
-            print(f"\nPeriode {current_period_index + 1}/{total_periods} ({overall_progress}%)")
+            # Zeige den Periodenfortschritt an
+            show_period_progress(current_period_index, total_periods)
             logger.info(f"Sammle Repositories in der Periode {period_start} bis {period_end}")
             
             # Sammle Repositories in dieser Periode
@@ -588,7 +591,8 @@ class RepositoryCollector:
             
             # Prüfe, ob wir das Maximum erreicht haben
             if max_repos and total_collected >= max_repos:
-                logger.info(f"Maximale Anzahl von Repositories erreicht: {max_repos}")
+                # Zeige eine Meldung an, dass die maximale Anzahl erreicht wurde
+                show_max_repos_reached(max_repos)
                 break
             
             # Gehe zur nächsten Periode
@@ -596,6 +600,6 @@ class RepositoryCollector:
                 logger.info("Alle Zeitperioden abgeschlossen")
                 break
         
-        logger.info(f"Sammlung abgeschlossen. Insgesamt {total_collected} Repositories gesammelt.")
-        print(f"\nSammlung abgeschlossen. Insgesamt {total_collected} Repositories gesammelt.")
+        # Zeige eine Zusammenfassung der gesamten Sammlung an
+        show_collection_summary(total_collected)
         return total_collected
