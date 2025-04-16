@@ -489,7 +489,7 @@ class GitHubAPI:
         Returns:
             Liste von Contributors
         """
-        endpoint = f"repos/{owner}/{repo}/contributors"
+        endpoint = f"/repos/{owner}/{repo}/contributors"
         params = {
             "per_page": per_page,
             "page": page,
@@ -497,6 +497,56 @@ class GitHubAPI:
         }
         
         return self.request("GET", endpoint, params)
+    
+    def get_repository_contributors_count(self, owner: str, repo: str) -> int:
+        """
+        Rufe die Anzahl der Contributors eines Repositories ab.
+        Verwendet einen HEAD-Request, um nur die Header-Informationen zu erhalten,
+        was effizienter ist als alle Contributors abzurufen.
+        
+        Args:
+            owner: Repository-Eigentümer (Benutzer oder Organisation)
+            repo: Repository-Name
+            
+        Returns:
+            Anzahl der Contributors oder 0 bei Fehlern
+        """
+        endpoint = f"/repos/{owner}/{repo}/contributors"
+        params = {
+            "per_page": 1,
+            "anon": "true"  # Auch anonyme Contributors zählen
+        }
+        
+        client = self._get_client()
+        token = client.token
+        
+        try:
+            # HEAD-Request senden, um nur die Header zu erhalten
+            url = f"{client.BASE_URL}{endpoint}"
+            response = client.session.head(url, params=params)
+            
+            # Rate-Limit-Informationen aktualisieren
+            remaining = int(response.headers.get('X-RateLimit-Remaining', 0))
+            reset_time = int(response.headers.get('X-RateLimit-Reset', 0))
+            self.token_pool.update_token_info(token, remaining, reset_time)
+            
+            # Wenn der Link-Header vorhanden ist, enthält er die Paginierungsinformationen
+            if 'Link' in response.headers:
+                link_header = response.headers['Link']
+                # Suche nach dem letzten Seitenlink (rel="last")
+                if 'rel="last"' in link_header:
+                    # Extrahiere die Seitenzahl aus dem Link
+                    last_page = int(link_header.split('page=')[-1].split('&')[0].split('>')[0])
+                    return last_page
+                else:
+                    # Wenn es keinen "last"-Link gibt, gibt es nur eine Seite
+                    return 1
+            else:
+                # Wenn kein Link-Header vorhanden ist, gibt es keine Contributors
+                return 0
+        except Exception as e:
+            logger.warning(f"Fehler beim Abrufen der Contributors-Anzahl für {owner}/{repo}: {e}")
+            return 0
     
     def get_organization(self, org_name: str) -> Dict[str, Any]:
         """
@@ -559,4 +609,56 @@ class GitHubAPI:
         Returns:
             Rate-Limit-Informationen
         """
-        return self.request("GET", "rate_limit")
+        endpoint = "/rate_limit"
+        return self.request("GET", endpoint, use_cache=False)
+        
+    def monitor_rate_limit(self, threshold_percent: int = 10) -> Dict[str, Any]:
+        """
+        Überwacht das Rate-Limit und gibt Warnungen aus, wenn es unter einen
+        bestimmten Schwellenwert fällt.
+        
+        Args:
+            threshold_percent: Schwellenwert in Prozent, bei dem eine Warnung ausgegeben wird
+            
+        Returns:
+            Dictionary mit Rate-Limit-Informationen für alle Tokens
+        """
+        rate_limits = {}
+        warnings = []
+        
+        for token, client in self.clients.items():
+            try:
+                rate_limit_info = client.request("GET", "/rate_limit", use_cache=False)
+                core_limit = rate_limit_info.get('resources', {}).get('core', {})
+                
+                limit = core_limit.get('limit', 0)
+                remaining = core_limit.get('remaining', 0)
+                reset_time = core_limit.get('reset', 0)
+                
+                # Aktualisiere Token-Info
+                self.token_pool.update_token_info(token, remaining, reset_time)
+                
+                # Berechne Prozentsatz der verbleibenden Anfragen
+                percent_remaining = (remaining / limit) * 100 if limit > 0 else 0
+                
+                rate_limits[token] = {
+                    'limit': limit,
+                    'remaining': remaining,
+                    'reset_time': reset_time,
+                    'percent_remaining': percent_remaining,
+                    'reset_datetime': datetime.fromtimestamp(reset_time).strftime('%Y-%m-%d %H:%M:%S')
+                }
+                
+                # Prüfe, ob der Schwellenwert unterschritten wurde
+                if percent_remaining < threshold_percent:
+                    warning_msg = f"Rate-Limit-Warnung: Token {token[:7]}... hat nur noch {remaining} von {limit} Anfragen übrig ({percent_remaining:.1f}%). Reset um {rate_limits[token]['reset_datetime']}"
+                    warnings.append(warning_msg)
+                    logger.warning(warning_msg)
+            except Exception as e:
+                logger.error(f"Fehler beim Abrufen des Rate-Limits für Token {token[:7]}...: {e}")
+        
+        return {
+            'rate_limits': rate_limits,
+            'warnings': warnings,
+            'has_warnings': len(warnings) > 0
+        }

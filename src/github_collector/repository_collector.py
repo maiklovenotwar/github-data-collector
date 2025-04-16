@@ -347,12 +347,42 @@ class RepositoryCollector:
                     # Setze die Organisationsdaten basierend auf dem Eigentümer
                     repo_data['organization'] = owner_data
                     logger.debug(f"Organisationsdaten aus Owner-Feld für {repo_data.get('full_name')} hinzugefügt")
+                    
+                    # Hole erweiterte Organisationsdaten, wenn möglich
+                    try:
+                        org_login = owner_data.get('login')
+                        if org_login:
+                            org_details = self.api.get_organization(org_login)
+                            if org_details:
+                                # Aktualisiere die Organisationsdaten mit den erweiterten Details
+                                repo_data['organization'] = org_details
+                                logger.debug(f"Erweiterte Organisationsdaten für {org_login} abgerufen")
+                    except Exception as org_err:
+                        logger.warning(f"Fehler beim Abrufen erweiterter Organisationsdaten für {owner_data.get('login')}: {org_err}")
+            
+            # Hole die Anzahl der Contributors, falls nicht bereits vorhanden
+            if 'contributors_count' not in repo_data or not repo_data['contributors_count']:
+                try:
+                    owner_login = owner_data.get('login')
+                    repo_name = repo_data.get('name')
+                    if owner_login and repo_name:
+                        contributors_count = self.api.get_repository_contributors_count(owner_login, repo_name)
+                        repo_data['contributors_count'] = contributors_count
+                        logger.debug(f"Contributors-Anzahl für {repo_data.get('full_name')}: {contributors_count}")
+                except Exception as contrib_err:
+                    logger.warning(f"Fehler beim Abrufen der Contributors-Anzahl für {repo_data.get('full_name')}: {contrib_err}")
+            
+            # Überwache das Rate-Limit nach API-Aufrufen
+            rate_limit_info = self.api.monitor_rate_limit(threshold_percent=10)
+            if rate_limit_info.get('has_warnings', False):
+                for warning in rate_limit_info.get('warnings', []):
+                    logger.warning(warning)
             
             # Füge das Repository in die Datenbank ein
             repo = self.db.insert_repository(repo_data)
             
             if repo:
-                logger.info(f"Repository verarbeitet: {repo.full_name} (ID: {repo.id})")
+                logger.info(f"Repository verarbeitet: {repo.full_name} (ID: {repo.id}, Contributors: {repo.contributors_count})")
                 if repo.organization_id:
                     logger.debug(f"Repository {repo.full_name} ist mit Organisation ID {repo.organization_id} verknüpft")
             else:
