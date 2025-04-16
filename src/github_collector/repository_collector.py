@@ -191,6 +191,7 @@ class RepositoryCollector:
             state_file: Pfad zur Zustandsdatei
         """
         self.github = github_client
+        self.api = github_client  # Alias für die neuen Funktionen
         self.db = db
         self.state = CollectionState(state_file)
     
