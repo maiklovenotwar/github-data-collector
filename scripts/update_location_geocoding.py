@@ -14,6 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 
 from github_collector.database.database import GitHubDatabase
 from github_collector.geocoding.geocoding_service import GeocodingService
+from github_collector.ui.stats import show_geocoding_stats_before, show_geocoding_stats_after
 
 # Konfiguriere Logging
 from github_collector.utils.logging_config import setup_logging
@@ -229,11 +230,7 @@ def main():
         contributor_stats = db.get_contributor_location_stats()
         org_stats = db.get_organization_location_stats()
         
-        print("\n=== Statistiken vor der Aktualisierung ===")
-        print(f"Contributors mit Standort: {contributor_stats['with_location']} von {contributor_stats['total']} ({contributor_stats['location_percentage']:.1f}%)")
-        print(f"Contributors mit Ländercode: {contributor_stats['with_country_code']} von {contributor_stats['total']} ({contributor_stats['country_code_percentage']:.1f}%)")
-        print(f"Organisationen mit Standort: {org_stats['with_location']} von {org_stats['total']} ({org_stats['location_percentage']:.1f}%)")
-        print(f"Organisationen mit Ländercode: {org_stats['with_country_code']} von {org_stats['total']} ({org_stats['country_code_percentage']:.1f}%)")
+        show_geocoding_stats_before(contributor_stats, org_stats)
         
         # Aktualisiere Contributors und/oder Organisationen
         updated_contributors = 0
@@ -259,13 +256,7 @@ def main():
         contributor_stats = db.get_contributor_location_stats()
         org_stats = db.get_organization_location_stats()
         
-        print("\n=== Statistiken nach der Aktualisierung ===")
-        print(f"Contributors mit Standort: {contributor_stats['with_location']} von {contributor_stats['total']} ({contributor_stats['location_percentage']:.1f}%)")
-        print(f"Contributors mit Ländercode: {contributor_stats['with_country_code']} von {contributor_stats['total']} ({contributor_stats['country_code_percentage']:.1f}%)")
-        print(f"Organisationen mit Standort: {org_stats['with_location']} von {org_stats['total']} ({org_stats['location_percentage']:.1f}%)")
-        print(f"Organisationen mit Ländercode: {org_stats['with_country_code']} von {org_stats['total']} ({org_stats['country_code_percentage']:.1f}%)")
-        
-        print(f"\nInsgesamt {updated_contributors} Contributors und {updated_organizations} Organisationen aktualisiert.")
+        show_geocoding_stats_after(contributor_stats, org_stats, updated_contributors, updated_organizations)
     
     finally:
         # Speichere den Geocoding-Cache

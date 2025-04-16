@@ -15,6 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 from github_collector.api.github_api import GitHubAPI
 from github_collector.database.database import GitHubDatabase
 from github_collector.repository_collector import RepositoryCollector
+from github_collector.ui.stats import show_database_stats
 
 # Konfiguriere Logging
 from github_collector.utils.logging_config import setup_logging
@@ -91,56 +92,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def show_database_stats(db):
-    """Zeige Statistiken über die Datenbank an."""
-    print("\n=== Datenbankstatistiken ===")
-    print(f"Repositories: {db.get_repository_count()}")
-    print(f"Contributors: {db.get_contributor_count()}")
-    print(f"Organisationen: {db.get_organization_count()}")
-    
-    # Zeige Sprachstatistiken an, falls verfügbar
-    try:
-        languages = db.get_language_statistics()
-        if languages:
-            print("\nTop-Sprachen:")
-            for lang, count in languages[:10]:
-                print(f"  {lang}: {count} Repositories")
-    except Exception as e:
-        logger.debug(f"Konnte keine Sprachstatistiken abrufen: {e}")
-    
-    # Zeige Erstellungsdatumsbereich an
-    try:
-        date_range = db.get_repository_date_range()
-        if date_range:
-            print(f"\nRepository-Datumsbereich: {date_range[0]} bis {date_range[1]}")
-    except Exception as e:
-        logger.debug(f"Konnte keinen Repository-Datumsbereich abrufen: {e}")
-        
-    # Zeige Standort- und Ländercode-Statistiken für Contributors an
-    try:
-        contributor_stats = db.get_contributor_location_stats()
-        if contributor_stats:
-            print("\nContributor-Standortstatistiken:")
-            print(f"  Gesamtzahl Contributors: {contributor_stats['total']}")
-            print(f"  Contributors mit Standort: {contributor_stats['with_location']} ({contributor_stats['location_percentage']:.1f}%)")
-            print(f"  Contributors mit Ländercode: {contributor_stats['with_country_code']} ({contributor_stats['country_code_percentage']:.1f}%)")
-            if contributor_stats['with_location'] > 0:
-                print(f"  Ländercode-Auflösungsrate: {contributor_stats['country_code_from_location_percentage']:.1f}% der Contributors mit Standort")
-    except Exception as e:
-        logger.debug(f"Konnte keine Contributor-Standortstatistiken abrufen: {e}")
-        
-    # Zeige Standort- und Ländercode-Statistiken für Organisationen an
-    try:
-        org_stats = db.get_organization_location_stats()
-        if org_stats:
-            print("\nOrganisations-Standortstatistiken:")
-            print(f"  Gesamtzahl Organisationen: {org_stats['total']}")
-            print(f"  Organisationen mit Standort: {org_stats['with_location']} ({org_stats['location_percentage']:.1f}%)")
-            print(f"  Organisationen mit Ländercode: {org_stats['with_country_code']} ({org_stats['country_code_percentage']:.1f}%)")
-            if org_stats['with_location'] > 0:
-                print(f"  Ländercode-Auflösungsrate: {org_stats['country_code_from_location_percentage']:.1f}% der Organisationen mit Standort")
-    except Exception as e:
-        logger.debug(f"Konnte keine Organisations-Standortstatistiken abrufen: {e}")
+
 
 
 def interactive_mode(args, api_client, db):
