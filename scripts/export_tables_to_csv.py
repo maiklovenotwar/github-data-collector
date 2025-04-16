@@ -6,14 +6,13 @@ import os
 import sys
 import logging
 import argparse
-import csv
-from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Optional
 
 # Füge das src-Verzeichnis zum Python-Pfad hinzu
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 
 from github_collector.database.database import GitHubDatabase
+from github_collector.export.csv_export import export_tables
 
 # Konfiguriere Logging
 from github_collector.utils.logging_config import setup_logging
@@ -41,72 +40,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def export_table_to_csv(db: GitHubDatabase, table_name: str, output_file: str, limit: Optional[int] = None) -> int:
-    """
-    Exportiere eine Tabelle in eine CSV-Datei.
-    
-    Args:
-        db: Datenbankverbindung
-        table_name: Name der zu exportierenden Tabelle
-        output_file: Pfad zur Ausgabedatei
-        limit: Maximale Anzahl zu exportierender Zeilen
-        
-    Returns:
-        Anzahl der exportierten Zeilen
-    """
-    # Verwende SQL-Abfrage, um die Daten direkt zu holen
-    # Dies umgeht das Problem mit den Metadaten
-    from sqlalchemy import text, inspect
-    
-    # Hole die Tabelle aus dem Model
-    model = None
-    if table_name == "contributors":
-        from github_collector.database.models import Contributor
-        model = Contributor
-    elif table_name == "organizations":
-        from github_collector.database.models import Organization
-        model = Organization
-    elif table_name == "repositories":
-        from github_collector.database.models import Repository
-        model = Repository
-    else:
-        raise ValueError(f"Unbekannte Tabelle: {table_name}")
-    
-    # Hole die Daten mit dem ORM
-    query = db.session.query(model)
-    
-    # Begrenze die Anzahl der Zeilen, falls angegeben
-    if limit:
-        query = query.limit(limit)
-    
-    # Führe die Abfrage aus
-    results = query.all()
-    
-    if not results:
-        logger.warning(f"Keine Daten in Tabelle {table_name} gefunden")
-        return 0
-    
-    # Hole die Spalten aus dem Modell
-    mapper = inspect(model)
-    columns = [column.key for column in mapper.columns]
-    
-    # Erstelle das Ausgabeverzeichnis, falls es nicht existiert
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    
-    # Schreibe die CSV-Datei
-    with open(output_file, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        
-        # Schreibe die Kopfzeile
-        writer.writerow(columns)
-        
-        # Schreibe die Daten
-        for result in results:
-            row = [getattr(result, column, None) for column in columns]
-            writer.writerow(row)
-    
-    logger.info(f"{len(results)} Zeilen aus Tabelle {table_name} nach {output_file} exportiert")
-    return len(results)
+
 
 
 def main():
@@ -135,34 +69,14 @@ def main():
     else:
         tables = args.tables
     
-    # Erstelle das Ausgabeverzeichnis, falls es nicht existiert
-    os.makedirs(args.output_dir, exist_ok=True)
-    
-    # Zeitstempel für Dateinamen, falls gewünscht
-    timestamp = ""
-    if args.with_timestamp:
-        timestamp = f"_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    
-    # Exportiere jede Tabelle
-    total_exported = 0
-    
-    for table_name in tables:
-        output_file = os.path.join(args.output_dir, f"{table_name}{timestamp}.csv")
-        
-        try:
-            rows_exported = export_table_to_csv(
-                db=db,
-                table_name=table_name,
-                output_file=output_file,
-                limit=args.limit
-            )
-            
-            total_exported += rows_exported
-        
-        except Exception as e:
-            logger.error(f"Fehler beim Exportieren der Tabelle {table_name}: {e}")
-    
-    logger.info(f"Export abgeschlossen. Insgesamt {total_exported} Zeilen exportiert.")
+    # Exportiere die Tabellen
+    export_tables(
+        db=db,
+        tables=tables,
+        output_dir=args.output_dir,
+        limit=args.limit,
+        with_timestamp=args.with_timestamp
+    )
     
     # Schließe Datenbankverbindung
     db.close()
