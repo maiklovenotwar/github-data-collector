@@ -1,0 +1,8 @@
+alembic
+geopy
+pandas
+pycountry
+python-dateutil
+python-dotenv
+requests
+sqlalchemy
