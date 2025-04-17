@@ -16,11 +16,12 @@ from github_collector.api.github_api import GitHubAPI
 from github_collector.database.database import GitHubDatabase
 from github_collector.repository_collector import RepositoryCollector
 from github_collector.ui.stats import show_database_stats
+from github_collector.utils.performance_tracker import PerformanceTracker, PerformanceReporter
 
 # Konfiguriere Logging
-from github_collector.utils.logging_config import setup_logging
+from github_collector.utils.logging_config import get_repository_logger
 
-logger = setup_logging(log_file="repository_collection.log")
+logger = get_repository_logger()
 
 
 def setup_api_client():
@@ -88,6 +89,21 @@ def parse_arguments():
                        help="Im nicht-interaktiven Modus ausführen (erfordert Zeitbereichs- und Limit-Optionen)")
     parser.add_argument("--stats", action="store_true", 
                        help="Datenbankstatistiken anzeigen und beenden")
+    parser.add_argument("--cleanup-owners", action="store_true",
+                       help="Verwaiste Owner-Einträge (Contributors und Organisationen ohne Repositories) bereinigen")
+    parser.add_argument("--cleanup-dry-run", action="store_true",
+                       help="Simulationsmodus für die Bereinigung: Zeigt an, welche Einträge entfernt würden, ohne Änderungen vorzunehmen")
+    
+    # Performance-Tracking-Optionen
+    perf_group = parser.add_argument_group("Performance-Tracking-Optionen")
+    perf_group.add_argument("--disable-performance-tracking", action="store_true",
+                          help="Deaktiviert das Performance-Tracking während der Ausführung")
+    perf_group.add_argument("--performance-output", choices=["json", "csv", "log"], default="log",
+                          help="Format für die Ausgabe der Performance-Daten (Standard: log)")
+    perf_group.add_argument("--performance-output-path", 
+                          help="Pfad für die Ausgabe der Performance-Daten (bei json oder csv)")
+    perf_group.add_argument("--owner-analysis", action="store_true",
+                          help="Führt eine detaillierte Analyse der Owner-Metadaten durch")
     
     return parser.parse_args()
 
@@ -100,8 +116,15 @@ def interactive_mode(args, api_client, db):
     # Zeige aktuelle Statistiken an
     show_database_stats(db)
     
-    # Initialisiere Repository-Collector
-    collector = RepositoryCollector(github_client=api_client, db=db)
+    # Performance-Tracking-Konfiguration
+    enable_performance_tracking = not args.disable_performance_tracking
+    
+    # Initialisiere Repository-Collector mit Performance-Tracking
+    collector = RepositoryCollector(
+        github_client=api_client, 
+        db=db,
+        enable_performance_tracking=enable_performance_tracking
+    )
     
     # Frage nach Zeitbereich, falls nicht angegeben
     if not args.time_range:
@@ -272,8 +295,38 @@ def interactive_mode(args, api_client, db):
             max_repos=limit,
             resume=True
         )
+        
+        # Ausgabe der Performance-Daten, wenn Performance-Tracking aktiviert ist
+        if enable_performance_tracking:
+            performance_reporter = PerformanceReporter(collector.performance_tracker)
+            
+            # Ausgabe je nach gewähltem Format
+            if args.performance_output == "json":
+                output_path = args.performance_output_path or "performance_data.json"
+                performance_reporter.to_json(output_path)
+                logger.info(f"Performance-Daten wurden als JSON in {output_path} gespeichert")
+                print(f"\nPerformance-Daten wurden als JSON in {output_path} gespeichert")
+            
+            elif args.performance_output == "csv":
+                output_path = args.performance_output_path or "performance_data"
+                csv_files = performance_reporter.to_csv(output_path)
+                logger.info(f"Performance-Daten wurden als CSV-Dateien in {output_path} gespeichert")
+                print(f"\nPerformance-Daten wurden als CSV-Dateien in {output_path} gespeichert:")
+                for file_type, file_path in csv_files.items():
+                    print(f"  - {file_type}: {file_path}")
+            
+            else:  # log
+                print("\nPerformance-Zusammenfassung:")
+                collector.performance_tracker.print_summary()
+                
     except KeyboardInterrupt:
         print("\nSammlung unterbrochen. Der Fortschritt wurde gespeichert und kann später fortgesetzt werden.")
+        
+        # Auch bei Unterbrechung Performance-Daten ausgeben, wenn aktiviert
+        if enable_performance_tracking:
+            print("\nPerformance-Daten bis zur Unterbrechung:")
+            collector.performance_tracker.print_summary()
+            
     except Exception as e:
         logger.error(f"Fehler bei der Repository-Sammlung: {e}")
     
@@ -315,8 +368,15 @@ def non_interactive_mode(args, api_client, db):
         logger.error(f"Ungültiger Zeitbereich: {args.time_range}")
         return
     
-    # Initialisiere Repository-Collector
-    collector = RepositoryCollector(github_client=api_client, db=db)
+    # Performance-Tracking-Konfiguration
+    enable_performance_tracking = not args.disable_performance_tracking
+    
+    # Initialisiere Repository-Collector mit Performance-Tracking
+    collector = RepositoryCollector(
+        github_client=api_client, 
+        db=db,
+        enable_performance_tracking=enable_performance_tracking
+    )
     
     # Sammle Repositories
     try:
@@ -327,8 +387,37 @@ def non_interactive_mode(args, api_client, db):
             max_repos=args.limit,
             resume=True
         )
+        
+        # Ausgabe der Performance-Daten, wenn Performance-Tracking aktiviert ist
+        if enable_performance_tracking:
+            performance_reporter = PerformanceReporter(collector.performance_tracker)
+            
+            # Ausgabe je nach gewähltem Format
+            if args.performance_output == "json":
+                output_path = args.performance_output_path or "performance_data.json"
+                performance_reporter.to_json(output_path)
+                logger.info(f"Performance-Daten wurden als JSON in {output_path} gespeichert")
+            
+            elif args.performance_output == "csv":
+                output_path = args.performance_output_path or "performance_data"
+                csv_files = performance_reporter.to_csv(output_path)
+                logger.info(f"Performance-Daten wurden als CSV-Dateien in {output_path} gespeichert")
+                for file_type, file_path in csv_files.items():
+                    logger.info(f"  - {file_type}: {file_path}")
+            
+            else:  # log
+                logger.info("Performance-Zusammenfassung:")
+                performance_reporter.to_log()
+                
     except KeyboardInterrupt:
         print("\nSammlung unterbrochen. Der Fortschritt wurde gespeichert und kann später fortgesetzt werden.")
+        
+        # Auch bei Unterbrechung Performance-Daten ausgeben, wenn aktiviert
+        if enable_performance_tracking:
+            logger.info("Performance-Daten bis zur Unterbrechung:")
+            performance_reporter = PerformanceReporter(collector.performance_tracker)
+            performance_reporter.to_log()
+            
     except Exception as e:
         logger.error(f"Fehler bei der Repository-Sammlung: {e}")
 
@@ -348,6 +437,12 @@ def main():
     # Zeige nur Statistiken an, falls angefordert
     if args.stats:
         show_database_stats(db)
+        return
+    
+    # Bereinige verwaiste Owner-Einträge, falls angefordert
+    if args.cleanup_owners or args.cleanup_dry_run:
+        from github_collector.tools.cleanup_orphaned_owners import cleanup_orphaned_owners
+        cleanup_orphaned_owners(db, dry_run=args.cleanup_dry_run)
         return
     
     # Initialisiere API-Client

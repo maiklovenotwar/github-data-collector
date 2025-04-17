@@ -17,8 +17,9 @@ from github_collector.database.database import init_db
 
 # Konfiguriere Logging
 from github_collector.utils.logging_config import setup_logging
+from github_collector import config
 
-logger = setup_logging(log_file="reset_and_collect.log")
+logger = setup_logging(log_file=config.RESET_LOG)
 
 
 def reset_database():

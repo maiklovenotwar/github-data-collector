@@ -17,9 +17,9 @@ from github_collector.geocoding.geocoding_service import GeocodingService
 from github_collector.ui.stats import show_geocoding_stats_before, show_geocoding_stats_after
 
 # Konfiguriere Logging
-from github_collector.utils.logging_config import setup_logging
+from github_collector.utils.logging_config import get_geocoding_logger
 
-logger = setup_logging(log_file="geocoding.log")
+logger = get_geocoding_logger()
 
 
 def parse_arguments():

@@ -9,9 +9,10 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
 from github_collector.utils.logging_config import setup_logging
+from github_collector import config
 
 # Konfiguriere Logging
-logger = setup_logging(log_file="test_logging.log")
+logger = setup_logging(log_file=config.LOG_DIR / "test_logging.log")
 
 # Teste das Logging
 logger.debug("Debug-Nachricht")
@@ -19,4 +20,4 @@ logger.info("Info-Nachricht")
 logger.warning("Warnung-Nachricht")
 logger.error("Fehler-Nachricht")
 
-print("Logging-Test abgeschlossen. Prüfe die Datei 'test_logging.log'.")
+print(f"Logging-Test abgeschlossen. Prüfe die Datei '{config.LOG_DIR / 'test_logging.log'}'.")

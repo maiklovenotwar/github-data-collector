@@ -15,9 +15,9 @@ from github_collector.database.database import GitHubDatabase
 from github_collector.export.csv_export import export_tables
 
 # Konfiguriere Logging
-from github_collector.utils.logging_config import setup_logging
+from github_collector.utils.logging_config import get_export_logger
 
-logger = setup_logging(log_file="export.log")
+logger = get_export_logger()
 
 
 def parse_arguments():
