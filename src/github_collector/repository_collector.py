@@ -332,8 +332,40 @@ class RepositoryCollector:
             logger.error(f"Fehler bei der Ermittlung der Gesamtanzahl der Repositories: {e}")
             return 0
     
-    # Cache für Organisationsdaten
+    # Caches für Metadaten
     _org_cache = {}
+    _contributor_cache = {}
+    
+    def _collect_contributors_metadata_batch(self, contributor_logins: List[str]) -> None:
+        """
+        Sammelt Metadaten für mehrere Contributors in einem Batch.
+        
+        Args:
+            contributor_logins: Liste der GitHub-Benutzernamen der Contributors
+        """
+        for login in contributor_logins:
+            # Überspringe bereits gecachte Contributors
+            if login in self._contributor_cache:
+                logger.debug(f"Contributor-Metadaten für {login} aus Cache verwendet")
+                continue
+                
+            try:
+                # Hole Contributor-Daten von der API
+                contributor_data = self.api.get_contributor(login)
+                if contributor_data:
+                    # Speichere im Cache
+                    self._contributor_cache[login] = contributor_data
+                    # Füge in die Datenbank ein oder aktualisiere
+                    self.db.insert_contributor(contributor_data)
+                    logger.debug(f"Erweiterte Contributor-Metadaten für {login} abgerufen und gecacht")
+            except Exception as e:
+                logger.warning(f"Fehler beim Abrufen von Contributor-Metadaten für {login}: {e}")
+            
+            # Überwache das Rate-Limit nach jedem API-Aufruf
+            rate_limit_info = self.api.monitor_rate_limit(threshold_percent=10)
+            if rate_limit_info.get('has_warnings', False):
+                for warning in rate_limit_info.get('warnings', []):
+                    logger.warning(warning)
     
     def _process_repository(self, repo_data: Dict[str, Any]) -> None:
         """
@@ -345,7 +377,11 @@ class RepositoryCollector:
         try:
             # Prüfe, ob das Repository einer Organisation gehört
             owner_data = repo_data.get('owner', {})
-            if owner_data and owner_data.get('type') == 'Organization':
+            owner_login = owner_data.get('login') if owner_data else None
+            owner_type = owner_data.get('type') if owner_data else None
+            
+            # Verarbeite Organisationsdaten, wenn der Owner eine Organisation ist
+            if owner_type == 'Organization':
                 if 'organization' not in repo_data or not repo_data['organization']:
                     # Setze die Organisationsdaten basierend auf dem Eigentümer
                     repo_data['organization'] = owner_data
@@ -353,22 +389,30 @@ class RepositoryCollector:
                     
                     # Hole erweiterte Organisationsdaten aus dem Cache oder von der API
                     try:
-                        org_login = owner_data.get('login')
-                        if org_login:
+                        if owner_login:
                             # Prüfe, ob die Organisation bereits im Cache ist
-                            if org_login in self._org_cache:
-                                org_details = self._org_cache[org_login]
+                            if owner_login in self._org_cache:
+                                org_details = self._org_cache[owner_login]
                                 repo_data['organization'] = org_details
-                                logger.debug(f"Organisationsdaten für {org_login} aus Cache verwendet")
+                                logger.debug(f"Organisationsdaten für {owner_login} aus Cache verwendet")
                             else:
                                 # Hole Organisationsdaten von der API und speichere sie im Cache
-                                org_details = self.api.get_organization(org_login)
+                                org_details = self.api.get_organization(owner_login)
                                 if org_details:
-                                    self._org_cache[org_login] = org_details
+                                    self._org_cache[owner_login] = org_details
                                     repo_data['organization'] = org_details
-                                    logger.debug(f"Erweiterte Organisationsdaten für {org_login} abgerufen und gecacht")
+                                    logger.debug(f"Erweiterte Organisationsdaten für {owner_login} abgerufen und gecacht")
                     except Exception as org_err:
-                        logger.warning(f"Fehler beim Abrufen erweiterter Organisationsdaten für {owner_data.get('login')}: {org_err}")
+                        logger.warning(f"Fehler beim Abrufen erweiterter Organisationsdaten für {owner_login}: {org_err}")
+            
+            # Verarbeite Contributor-Metadaten, wenn der Owner ein User ist
+            elif owner_type == 'User':
+                try:
+                    if owner_login:
+                        # Sammle Contributor-Metadaten (einzeln oder in Batch)
+                        self._collect_contributors_metadata_batch([owner_login])
+                except Exception as contrib_err:
+                    logger.warning(f"Fehler beim Abrufen von Contributor-Metadaten für {owner_login}: {contrib_err}")
             
             # Überwache das Rate-Limit nach API-Aufrufen
             rate_limit_info = self.api.monitor_rate_limit(threshold_percent=10)
@@ -389,8 +433,34 @@ class RepositoryCollector:
         except Exception as e:
             logger.error(f"Fehler bei der Verarbeitung des Repositories {repo_data.get('full_name')}: {e}")
     
+    def _process_repositories_batch(self, repositories_data: List[Dict[str, Any]]) -> None:
+        """
+        Verarbeite mehrere Repositories in einem Batch.
+        
+        Args:
+            repositories_data: Liste von Repository-Daten aus der GitHub API
+        """
+        # Sammle alle einzigartigen Contributor-Logins
+        contributor_logins = set()
+        
+        for repo_data in repositories_data:
+            owner_data = repo_data.get('owner', {})
+            if owner_data and owner_data.get('type') == 'User':
+                owner_login = owner_data.get('login')
+                if owner_login:
+                    contributor_logins.add(owner_login)
+        
+        # Sammle Metadaten für alle Contributors in einem Batch
+        if contributor_logins:
+            logger.info(f"Sammle Metadaten für {len(contributor_logins)} Contributors")
+            self._collect_contributors_metadata_batch(list(contributor_logins))
+        
+        # Verarbeite jedes Repository einzeln
+        for repo_data in repositories_data:
+            self._process_repository(repo_data)
+    
     def _collect_repositories_in_period(self, start_date: datetime, end_date: datetime, 
-                                      min_stars: int = 0, max_repos: Optional[int] = None) -> int:
+                                       min_stars: int = 0, max_repos: Optional[int] = None) -> int:
         """
         Sammle Repositories in einer bestimmten Zeitperiode.
         
@@ -479,13 +549,14 @@ class RepositoryCollector:
                     show_collection_progress(collected_count, total_count)
                 break
             
-            # Verarbeite die Repositories dieser Seite
-            for repo_data in items:
-                self._process_repository(repo_data)
-                collected_count += 1
+            # Verarbeite die Repositories dieser Seite als Batch
+            if items:
+                # Verarbeite alle Repositories dieser Seite in einem Batch
+                self._process_repositories_batch(items)
+                collected_count += len(items)
                 
                 # Aktualisiere den Sammlungszustand
-                total_collected = self.state.get("repositories_collected", 0) + 1
+                total_collected = self.state.get("repositories_collected", 0) + len(items)
                 self.state.update(
                     repositories_collected=total_collected,
                     current_period_page=page
