@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timedelta
 import random
 from time import perf_counter
+from dateutil import tz
 
 import requests
 from requests.exceptions import RequestException
