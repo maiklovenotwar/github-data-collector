@@ -332,46 +332,43 @@ class RepositoryCollector:
             logger.error(f"Fehler bei der Ermittlung der Gesamtanzahl der Repositories: {e}")
             return 0
     
+    # Cache für Organisationsdaten
+    _org_cache = {}
+    
     def _process_repository(self, repo_data: Dict[str, Any]) -> None:
         """
-        Verarbeite ein Repository und speichere es in der Datenbank.
+        Verarbeite ein einzelnes Repository und füge es in die Datenbank ein.
         
         Args:
-            repo_data: Repository-Daten von der GitHub API
+            repo_data: Repository-Daten aus der GitHub API
         """
         try:
             # Prüfe, ob das Repository einer Organisation gehört
             owner_data = repo_data.get('owner', {})
             if owner_data and owner_data.get('type') == 'Organization':
-                # Wenn der Eigentümer eine Organisation ist, aber keine Organisationsdaten vorhanden sind
                 if 'organization' not in repo_data or not repo_data['organization']:
                     # Setze die Organisationsdaten basierend auf dem Eigentümer
                     repo_data['organization'] = owner_data
                     logger.debug(f"Organisationsdaten aus Owner-Feld für {repo_data.get('full_name')} hinzugefügt")
                     
-                    # Hole erweiterte Organisationsdaten, wenn möglich
+                    # Hole erweiterte Organisationsdaten aus dem Cache oder von der API
                     try:
                         org_login = owner_data.get('login')
                         if org_login:
-                            org_details = self.api.get_organization(org_login)
-                            if org_details:
-                                # Aktualisiere die Organisationsdaten mit den erweiterten Details
+                            # Prüfe, ob die Organisation bereits im Cache ist
+                            if org_login in self._org_cache:
+                                org_details = self._org_cache[org_login]
                                 repo_data['organization'] = org_details
-                                logger.debug(f"Erweiterte Organisationsdaten für {org_login} abgerufen")
+                                logger.debug(f"Organisationsdaten für {org_login} aus Cache verwendet")
+                            else:
+                                # Hole Organisationsdaten von der API und speichere sie im Cache
+                                org_details = self.api.get_organization(org_login)
+                                if org_details:
+                                    self._org_cache[org_login] = org_details
+                                    repo_data['organization'] = org_details
+                                    logger.debug(f"Erweiterte Organisationsdaten für {org_login} abgerufen und gecacht")
                     except Exception as org_err:
                         logger.warning(f"Fehler beim Abrufen erweiterter Organisationsdaten für {owner_data.get('login')}: {org_err}")
-            
-            # Hole die Anzahl der Contributors, falls nicht bereits vorhanden
-            if 'contributors_count' not in repo_data or not repo_data['contributors_count']:
-                try:
-                    owner_login = owner_data.get('login')
-                    repo_name = repo_data.get('name')
-                    if owner_login and repo_name:
-                        contributors_count = self.api.get_repository_contributors_count(owner_login, repo_name)
-                        repo_data['contributors_count'] = contributors_count
-                        logger.debug(f"Contributors-Anzahl für {repo_data.get('full_name')}: {contributors_count}")
-                except Exception as contrib_err:
-                    logger.warning(f"Fehler beim Abrufen der Contributors-Anzahl für {repo_data.get('full_name')}: {contrib_err}")
             
             # Überwache das Rate-Limit nach API-Aufrufen
             rate_limit_info = self.api.monitor_rate_limit(threshold_percent=10)

@@ -98,6 +98,7 @@ class Repository(Base):
     # Zusätzliche Statistiken
     contributors_count = Column(Integer)
     commits_count = Column(Integer)
+    pull_requests_count = Column(Integer)
     
     # Zeitstempel
     created_at = Column(DateTime)

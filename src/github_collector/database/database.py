@@ -121,6 +121,7 @@ class GitHubDatabase:
             open_issues_count=repo_data.get('open_issues_count', 0),
             contributors_count=repo_data.get('contributors_count'),
             commits_count=repo_data.get('commits_count'),
+            pull_requests_count=repo_data.get('pull_requests_count'),
             created_at=self._parse_datetime(repo_data.get('created_at')),
             updated_at=self._parse_datetime(repo_data.get('updated_at')),
             pushed_at=self._parse_datetime(repo_data.get('pushed_at'))
@@ -160,6 +161,7 @@ class GitHubDatabase:
         repo.open_issues_count = repo_data.get('open_issues_count', repo.open_issues_count)
         repo.contributors_count = repo_data.get('contributors_count', repo.contributors_count)
         repo.commits_count = repo_data.get('commits_count', repo.commits_count)
+        repo.pull_requests_count = repo_data.get('pull_requests_count', repo.pull_requests_count)
         repo.updated_at = self._parse_datetime(repo_data.get('updated_at', repo.updated_at))
         repo.pushed_at = self._parse_datetime(repo_data.get('pushed_at', repo.pushed_at))
         
