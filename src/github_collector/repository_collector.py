@@ -7,6 +7,7 @@ import json
 from datetime import datetime, timedelta
 from dateutil import tz
 from typing import Dict, List, Tuple, Any, Optional, Iterator
+from time import perf_counter
 
 from github_collector.ui.progress import (
     show_period_progress,
@@ -22,6 +23,8 @@ from dateutil import tz
 
 from .api.github_api import GitHubAPI, GitHubAPIError, GitHubRateLimitError
 from .database.database import GitHubDatabase
+from .owners.owner_processor import OwnerProcessor
+from .utils.performance_tracker import PerformanceTracker, PerformanceReporter
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +184,8 @@ class RepositoryCollector:
     """
     
     def __init__(self, github_client: GitHubAPI, db: GitHubDatabase, 
-                state_file: str = "collection_state.json"):
+                 state_file: str = "collection_state.json",
+                 enable_performance_tracking: bool = None):
         """
         Initialisiere den Repository Collector.
         
@@ -189,11 +193,25 @@ class RepositoryCollector:
             github_client: GitHub API Client
             db: Datenbankverbindung
             state_file: Pfad zur Zustandsdatei
+            enable_performance_tracking: Aktiviert oder deaktiviert das Performance-Tracking
         """
+        # Performance-Tracker initialisieren
+        self.performance_tracker = PerformanceTracker(enable_tracking=enable_performance_tracking)
+        
+        # API-Client mit Performance-Tracker initialisieren
         self.github = github_client
         self.api = github_client  # Alias für die neuen Funktionen
+        
+        # Setze den Performance-Tracker im API-Client
+        if hasattr(self.api, 'performance_tracker'):
+            self.api.performance_tracker = self.performance_tracker
+        
+        # Datenbankverbindung und Zustand
         self.db = db
         self.state = CollectionState(state_file)
+        
+        # Owner-Processor initialisieren
+        self.owner_processor = OwnerProcessor(self.api, self.db, self.performance_tracker)
     
     def _calculate_time_periods(self, start_date: datetime, end_date: datetime, 
                               initial_period_days: int = 30) -> List[Tuple[datetime, datetime]]:
@@ -332,10 +350,6 @@ class RepositoryCollector:
             logger.error(f"Fehler bei der Ermittlung der Gesamtanzahl der Repositories: {e}")
             return 0
     
-    # Caches für Metadaten
-    _org_cache = {}
-    _contributor_cache = {}
-    
     def _collect_contributors_metadata_batch(self, contributor_logins: List[str]) -> None:
         """
         Sammelt Metadaten für mehrere Contributors in einem Batch.
@@ -343,29 +357,12 @@ class RepositoryCollector:
         Args:
             contributor_logins: Liste der GitHub-Benutzernamen der Contributors
         """
-        for login in contributor_logins:
-            # Überspringe bereits gecachte Contributors
-            if login in self._contributor_cache:
-                logger.debug(f"Contributor-Metadaten für {login} aus Cache verwendet")
-                continue
-                
-            try:
-                # Hole Contributor-Daten von der API
-                contributor_data = self.api.get_contributor(login)
-                if contributor_data:
-                    # Speichere im Cache
-                    self._contributor_cache[login] = contributor_data
-                    # Füge in die Datenbank ein oder aktualisiere
-                    self.db.insert_contributor(contributor_data)
-                    logger.debug(f"Erweiterte Contributor-Metadaten für {login} abgerufen und gecacht")
-            except Exception as e:
-                logger.warning(f"Fehler beim Abrufen von Contributor-Metadaten für {login}: {e}")
-            
-            # Überwache das Rate-Limit nach jedem API-Aufruf
-            rate_limit_info = self.api.monitor_rate_limit(threshold_percent=10)
-            if rate_limit_info.get('has_warnings', False):
-                for warning in rate_limit_info.get('warnings', []):
-                    logger.warning(warning)
+        # Verwende den Owner-Processor für die Verarbeitung der Contributors
+        self.owner_processor.process_contributors_batch(contributor_logins)
+    
+    # Performance-Tracking
+    _total_processing_time = 0.0
+    _repositories_processed = 0
     
     def _process_repository(self, repo_data: Dict[str, Any]) -> None:
         """
@@ -374,51 +371,24 @@ class RepositoryCollector:
         Args:
             repo_data: Repository-Daten aus der GitHub API
         """
+        # Starte Zeitmessung
+        start_time = perf_counter() if self.performance_tracker and self.performance_tracker.enabled else 0
+        processing_time = 0.0
+        
         try:
-            # Prüfe, ob das Repository einer Organisation gehört
-            owner_data = repo_data.get('owner', {})
-            owner_login = owner_data.get('login') if owner_data else None
-            owner_type = owner_data.get('type') if owner_data else None
+            # Prüfe, ob das Repository bereits existiert (um redundante API-Aufrufe zu vermeiden)
+            repo_id = repo_data.get('id')
+            if repo_id and self.db.check_repository_exists(repo_id):
+                if self.performance_tracker:
+                    self.performance_tracker.record_duplicate_repository()
+                logger.debug(f"Repository {repo_data.get('full_name')} (ID: {repo_id}) existiert bereits in der Datenbank")
+                return
             
-            # Verarbeite Organisationsdaten, wenn der Owner eine Organisation ist
-            if owner_type == 'Organization':
-                if 'organization' not in repo_data or not repo_data['organization']:
-                    # Setze die Organisationsdaten basierend auf dem Eigentümer
-                    repo_data['organization'] = owner_data
-                    logger.debug(f"Organisationsdaten aus Owner-Feld für {repo_data.get('full_name')} hinzugefügt")
-                    
-                    # Hole erweiterte Organisationsdaten aus dem Cache oder von der API
-                    try:
-                        if owner_login:
-                            # Prüfe, ob die Organisation bereits im Cache ist
-                            if owner_login in self._org_cache:
-                                org_details = self._org_cache[owner_login]
-                                repo_data['organization'] = org_details
-                                logger.debug(f"Organisationsdaten für {owner_login} aus Cache verwendet")
-                            else:
-                                # Hole Organisationsdaten von der API und speichere sie im Cache
-                                org_details = self.api.get_organization(owner_login)
-                                if org_details:
-                                    self._org_cache[owner_login] = org_details
-                                    repo_data['organization'] = org_details
-                                    logger.debug(f"Erweiterte Organisationsdaten für {owner_login} abgerufen und gecacht")
-                    except Exception as org_err:
-                        logger.warning(f"Fehler beim Abrufen erweiterter Organisationsdaten für {owner_login}: {org_err}")
+            # Setze den Batch-Tracking zurück, wenn ein neues Repository verarbeitet wird
+            self.owner_processor.reset_batch_tracking()
             
-            # Verarbeite Contributor-Metadaten, wenn der Owner ein User ist
-            elif owner_type == 'User':
-                try:
-                    if owner_login:
-                        # Sammle Contributor-Metadaten (einzeln oder in Batch)
-                        self._collect_contributors_metadata_batch([owner_login])
-                except Exception as contrib_err:
-                    logger.warning(f"Fehler beim Abrufen von Contributor-Metadaten für {owner_login}: {contrib_err}")
-            
-            # Überwache das Rate-Limit nach API-Aufrufen
-            rate_limit_info = self.api.monitor_rate_limit(threshold_percent=10)
-            if rate_limit_info.get('has_warnings', False):
-                for warning in rate_limit_info.get('warnings', []):
-                    logger.warning(warning)
+            # Verarbeite den Owner des Repositories (Organisation oder Contributor)
+            repo_data = self.owner_processor.process_repository_owner(repo_data)
             
             # Füge das Repository in die Datenbank ein
             repo = self.db.insert_repository(repo_data)
@@ -432,6 +402,29 @@ class RepositoryCollector:
         
         except Exception as e:
             logger.error(f"Fehler bei der Verarbeitung des Repositories {repo_data.get('full_name')}: {e}")
+        
+        finally:
+            # Ende der Zeitmessung und Aktualisierung der Statistiken, wenn Performance-Tracking aktiviert ist
+            if start_time > 0:
+                end_time = perf_counter()
+                processing_time = end_time - start_time
+                
+                # Aktualisiere Statistiken
+                self.__class__._total_processing_time += processing_time
+                self.__class__._repositories_processed += 1
+                
+                # Zeichne die Repository-Verarbeitung im Performance-Tracker auf
+                repo_name = repo_data.get('full_name', 'unbekannt')
+                self.performance_tracker.end_repository_processing(start_time, repo_name)
+            
+            # Zeige Performance-Informationen an
+            repo_name = repo_data.get('full_name', 'Unbekannt')
+            print(f"\r\u23F1 Repository {repo_name} verarbeitet in {processing_time:.2f} Sekunden")
+            
+            # Zeige Durchschnitt an, wenn mehrere Repositories verarbeitet wurden
+            if self.__class__._repositories_processed > 1:
+                avg_time = self.__class__._total_processing_time / self.__class__._repositories_processed
+                print(f"   Durchschnitt: {avg_time:.2f} Sekunden pro Repository ({self.__class__._repositories_processed} gesamt)")
     
     def _process_repositories_batch(self, repositories_data: List[Dict[str, Any]]) -> None:
         """
@@ -440,15 +433,37 @@ class RepositoryCollector:
         Args:
             repositories_data: Liste von Repository-Daten aus der GitHub API
         """
+        if not repositories_data:
+            return
+            
+        # Starte Zeitmessung für den Batch
+        batch_start_time = perf_counter()
+        batch_size = len(repositories_data)
+        logger.info(f"Starte Verarbeitung von Batch mit {batch_size} Repositories")
+        
         # Sammle alle einzigartigen Contributor-Logins
         contributor_logins = set()
+        organization_logins = set()
         
+        # Analysiere zuerst alle Owner-Daten
         for repo_data in repositories_data:
             owner_data = repo_data.get('owner', {})
-            if owner_data and owner_data.get('type') == 'User':
-                owner_login = owner_data.get('login')
-                if owner_login:
-                    contributor_logins.add(owner_login)
+            if not owner_data:
+                continue
+                
+            owner_login = owner_data.get('login')
+            owner_type = owner_data.get('type')
+            
+            if owner_type == 'User' and owner_login:
+                contributor_logins.add(owner_login)
+            elif owner_type == 'Organization' and owner_login:
+                organization_logins.add(owner_login)
+        
+        # Überwache das Rate-Limit vor dem Batch
+        rate_limit_info = self.api.monitor_rate_limit(threshold_percent=15)
+        if rate_limit_info.get('has_critical', False):
+            logger.warning("Kritisches Rate-Limit vor Repository-Batch-Verarbeitung erkannt")
+            print("\n[Warnung] Kritisches Rate-Limit vor Repository-Batch-Verarbeitung!\n")
         
         # Sammle Metadaten für alle Contributors in einem Batch
         if contributor_logins:
@@ -456,8 +471,30 @@ class RepositoryCollector:
             self._collect_contributors_metadata_batch(list(contributor_logins))
         
         # Verarbeite jedes Repository einzeln
+        processed_count = 0
         for repo_data in repositories_data:
-            self._process_repository(repo_data)
+            try:
+                self._process_repository(repo_data)
+                processed_count += 1
+                
+                # Zeige Fortschritt an
+                if batch_size > 10 and processed_count % 10 == 0:
+                    progress_percent = (processed_count / batch_size) * 100
+                    print(f"\rBatch-Fortschritt: {processed_count}/{batch_size} Repositories ({progress_percent:.1f}%)...", end="")
+            except Exception as e:
+                logger.error(f"Fehler bei der Verarbeitung von Repository {repo_data.get('full_name', 'unbekannt')}: {e}")
+        
+        # Ende der Zeitmessung für den Batch
+        batch_end_time = perf_counter()
+        batch_processing_time = batch_end_time - batch_start_time
+        avg_time_per_repo = batch_processing_time / max(1, processed_count)
+        
+        # Zeige Performance-Informationen für den Batch an
+        print(f"\n\u23F3 Batch mit {processed_count} von {batch_size} Repositories verarbeitet in {batch_processing_time:.2f} Sekunden")
+        print(f"   Durchschnitt im Batch: {avg_time_per_repo:.2f} Sekunden pro Repository")
+        
+        # Überwache das Rate-Limit nach dem Batch
+        self.api.monitor_rate_limit(threshold_percent=10)
     
     def _collect_repositories_in_period(self, start_date: datetime, end_date: datetime, 
                                        min_stars: int = 0, max_repos: Optional[int] = None) -> int:
@@ -488,21 +525,40 @@ class RepositoryCollector:
             overall_progress = min(100, (current_period_index * 100) // total_periods)
         
         while True:
-            # Suche nach Repositories in dieser Periode
-            results = self._search_repositories_in_period(
-                start_date=start_date,
-                end_date=end_date,
-                min_stars=min_stars,
-                page=page
-            )
-            
-            # Aktualisiere die Gesamtanzahl, falls verfügbar
-            if total_count is None and "total_count" in results:
-                total_count = results["total_count"]
-                logger.info(f"Gefunden: {total_count} Repositories in der Periode {start_date} bis {end_date}")
+            try:
+                # Überwache das Rate-Limit vor der Suche
+                rate_limit_info = self.api.monitor_rate_limit(threshold_percent=15)
+                if rate_limit_info.get('has_critical', False):
+                    # Bei kritischem Rate-Limit kurz pausieren, um die Warnmeldung anzuzeigen
+                    time.sleep(2)
+                
+                # Suche nach Repositories in dieser Periode
+                results = self._search_repositories_in_period(
+                    start_date=start_date,
+                    end_date=end_date,
+                    min_stars=min_stars,
+                    page=page
+                )
+                
+                # Aktualisiere die Gesamtanzahl, falls verfügbar
+                if total_count is None and "total_count" in results:
+                    total_count = results["total_count"]
+                    logger.info(f"Gefunden: {total_count} Repositories in der Periode {start_date} bis {end_date}")
                 
                 # Zeige die Anzahl der gefundenen Repositories in dieser Periode an
                 show_repositories_found(total_count)
+            
+            except GitHubRateLimitError as e:
+                logger.warning(f"Rate-Limit erreicht während der Sammlung in Periode {start_date} bis {end_date}. Warte auf Reset...")
+                print(f"\n[RateLimit] Rate-Limit erreicht während der Sammlung. Automatischer Neuversuch nach Reset.\n")
+                # Warte 60 Sekunden und versuche es erneut - der Token-Pool wird beim nächsten API-Aufruf automatisch warten
+                time.sleep(60)
+                continue
+            except GitHubAPIError as e:
+                logger.error(f"API-Fehler während der Sammlung: {e}")
+                print(f"\n[Fehler] GitHub API-Fehler: {e}\n")
+                time.sleep(10)  # Kurze Pause bei API-Fehlern
+                continue
                 
                 # Prüfe, ob wir die Periode aufteilen müssen
                 if total_count > 1000:
@@ -617,6 +673,13 @@ class RepositoryCollector:
         Returns:
             Anzahl der gesammelten Repositories
         """
+        # Starte Zeitmessung für den gesamten Sammelprozess
+        collection_start_time = perf_counter()
+        
+        # Setze Performance-Tracking zurück
+        self.__class__._total_processing_time = 0.0
+        self.__class__._repositories_processed = 0
+        
         # Standardwerte für Start- und Enddatum
         if end_date is None:
             end_date = datetime.now(tz.UTC)
@@ -701,4 +764,16 @@ class RepositoryCollector:
         
         # Zeige eine Zusammenfassung der gesamten Sammlung an
         show_collection_summary(total_collected)
+        
+        # Ende der Zeitmessung für den gesamten Sammelprozess
+        collection_end_time = perf_counter()
+        collection_time = collection_end_time - collection_start_time
+        
+        # Zeige Performance-Informationen für den gesamten Sammelprozess an
+        print(f"\n\u23F0 Gesamtzeit: {collection_time:.2f} Sekunden für {total_collected} Repositories")
+        if total_collected > 0:
+            print(f"   Durchschnitt gesamt: {collection_time / total_collected:.2f} Sekunden pro Repository")
+        print(f"   Reine Verarbeitungszeit: {self.__class__._total_processing_time:.2f} Sekunden")
+        print(f"   Overhead (API, Suche, etc.): {collection_time - self.__class__._total_processing_time:.2f} Sekunden")
+        
         return total_collected

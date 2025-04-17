@@ -176,6 +176,72 @@ class GitHubDatabase:
         
         return repo
     
+    def check_contributor_exists(self, login: str) -> bool:
+        """
+        Prüft, ob ein Contributor mit dem angegebenen Login bereits in der Datenbank existiert.
+        
+        Args:
+            login: GitHub-Benutzername des Contributors
+            
+        Returns:
+            True, wenn der Contributor existiert, sonst False
+        """
+        return self.session.query(Contributor).filter_by(login=login).first() is not None
+    
+    def check_organization_exists(self, login: str) -> bool:
+        """
+        Prüft, ob eine Organisation mit dem angegebenen Login bereits in der Datenbank existiert.
+        
+        Args:
+            login: GitHub-Benutzername der Organisation
+            
+        Returns:
+            True, wenn die Organisation existiert, sonst False
+        """
+        return self.session.query(Organization).filter_by(login=login).first() is not None
+    
+    def check_repository_exists(self, repo_id: int) -> bool:
+        """
+        Prüft, ob ein Repository mit der angegebenen ID bereits in der Datenbank existiert.
+        
+        Args:
+            repo_id: GitHub-Repository-ID
+            
+        Returns:
+            True, wenn das Repository existiert, sonst False
+        """
+        return self.session.query(Repository).filter_by(id=repo_id).first() is not None
+    
+    def get_all_contributor_logins(self) -> List[str]:
+        """
+        Ruft alle Contributor-Logins aus der Datenbank ab.
+        
+        Returns:
+            Liste aller Contributor-Logins
+        """
+        try:
+            # Optimierte Abfrage, die nur die Login-Spalte abruft
+            logins = [row[0] for row in self.session.query(Contributor.login).all()]
+            return logins
+        except Exception as e:
+            logger.error(f"Fehler beim Abrufen aller Contributor-Logins: {e}")
+            return []
+    
+    def get_all_organization_logins(self) -> List[str]:
+        """
+        Ruft alle Organization-Logins aus der Datenbank ab.
+        
+        Returns:
+            Liste aller Organization-Logins
+        """
+        try:
+            # Optimierte Abfrage, die nur die Login-Spalte abruft
+            logins = [row[0] for row in self.session.query(Organization.login).all()]
+            return logins
+        except Exception as e:
+            logger.error(f"Fehler beim Abrufen aller Organization-Logins: {e}")
+            return []
+    
     def insert_contributor(self, contributor_data: dict) -> Contributor:
         """
         Contributor in die Datenbank einfügen oder aktualisieren.

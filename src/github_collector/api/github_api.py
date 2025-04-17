@@ -7,9 +7,12 @@ import json
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timedelta
 import random
+from time import perf_counter
 
 import requests
 from requests.exceptions import RequestException
+
+from github_collector.utils.performance_tracker import PerformanceTracker, api_call
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +34,14 @@ class GitHubClient:
     
     BASE_URL = "https://api.github.com"
     
-    def __init__(self, token: str, cache_dir: Optional[str] = None):
+    def __init__(self, token: str, cache_dir: Optional[str] = None, performance_tracker: Optional[PerformanceTracker] = None):
         """
         Initialisiere den GitHub API Client.
         
         Args:
             token: GitHub API Token
             cache_dir: Verzeichnis für den Cache (optional)
+            performance_tracker: Performance-Tracker für API-Aufrufe (optional)
         """
         self.token = token
         self.session = requests.Session()
@@ -46,6 +50,9 @@ class GitHubClient:
             "Accept": "application/vnd.github.v3+json",
             "User-Agent": "GitHub-Data-Collector"
         })
+        
+        # Performance-Tracking
+        self.performance_tracker = performance_tracker
         
         # Rate Limit Tracking
         self.rate_limit = 5000
@@ -200,6 +207,9 @@ class GitHubClient:
         if method.upper() == 'GET' and use_cache:
             cached_response = self._get_from_cache(endpoint, params)
             if cached_response:
+                # Cache-Treffer zählen, aber keine Zeitmessung notwendig
+                if hasattr(self, 'performance_tracker') and self.performance_tracker:
+                    self.performance_tracker.record_cache_hit(endpoint)
                 return cached_response
         
         # Warte, falls das Rate Limit erreicht wurde
@@ -207,6 +217,9 @@ class GitHubClient:
         
         # Erstelle die vollständige URL
         url = f"{self.BASE_URL}/{endpoint.lstrip('/')}"
+        
+        # Starte die Zeitmessung für den API-Aufruf
+        start_time = perf_counter()
         
         try:
             # Sende die Anfrage
@@ -216,6 +229,13 @@ class GitHubClient:
                 params=params,
                 json=data
             )
+            
+            # Ende der Zeitmessung
+            duration = perf_counter() - start_time
+            
+            # Erfasse Performance-Metriken, wenn ein Tracker vorhanden ist
+            if hasattr(self, 'performance_tracker') and self.performance_tracker:
+                self.performance_tracker.record_api_call(endpoint, duration)
             
             # Aktualisiere Rate-Limit-Informationen
             self._handle_rate_limit(response)
@@ -299,8 +319,27 @@ class GitHubTokenPool:
             # Alle Tokens haben das Rate Limit erreicht, wähle das mit der frühesten Reset-Zeit
             token = min(self.token_info.items(), key=lambda x: x[1]['reset_time'])[0]
             wait_time = self.token_info[token]['reset_time'] - now
-            logger.warning(f"Alle Tokens haben das Rate Limit erreicht. Warte {wait_time:.1f} Sekunden...")
-            time.sleep(max(0, wait_time) + 1)  # +1 Sekunde Puffer
+            reset_datetime = datetime.fromtimestamp(self.token_info[token]['reset_time'])
+            reset_utc = reset_datetime.astimezone(tz.tzutc())
+            wait_minutes = max(0, wait_time) / 60
+            
+            # Ausführliche Logging-Ausgabe für Rate-Limit-Pausen
+            rate_limit_msg = f"[RateLimit] GitHub-Token hat Limit erreicht – warte {wait_minutes:.1f} Minuten bis Reset ({reset_utc.strftime('%H:%M')} UTC) ..."
+            logger.warning(rate_limit_msg)
+            print(f"\n{rate_limit_msg}\n")
+            
+            # Warte auf Reset mit Statusaktualisierung alle 30 Sekunden
+            remaining_wait = max(0, wait_time)
+            while remaining_wait > 0:
+                time.sleep(min(30, remaining_wait))
+                remaining_wait -= 30
+                if remaining_wait > 0:
+                    minutes_left = remaining_wait / 60
+                    logger.info(f"[RateLimit] Noch {minutes_left:.1f} Minuten bis zum Reset...")
+                    print(f"\r[RateLimit] Noch {minutes_left:.1f} Minuten bis zum Reset...", end="")
+            
+            logger.info("[RateLimit] Rate-Limit zurückgesetzt, setze Sammlung fort.")
+            print("\n[RateLimit] Rate-Limit zurückgesetzt, setze Sammlung fort.")
             return token
         
         # Sortiere nach verbleibenden Anfragen (absteigend) und letzter Verwendung (aufsteigend)
@@ -407,6 +446,7 @@ class GitHubAPI:
     
     # Hilfreiche Methoden für häufige API-Aufrufe
     
+    @api_call("get_repository")
     def get_repository(self, owner: str, repo: str) -> Dict[str, Any]:
         """
         Rufe Informationen zu einem Repository ab.
@@ -421,6 +461,7 @@ class GitHubAPI:
         endpoint = f"repos/{owner}/{repo}"
         return self.request("GET", endpoint)
     
+    @api_call("get_repositories")
     def get_repositories(self, since: Optional[int] = None, per_page: int = 100) -> List[Dict[str, Any]]:
         """
         Rufe eine Liste von Repositories ab.
@@ -438,6 +479,7 @@ class GitHubAPI:
         
         return self.request("GET", "repositories", params)
     
+    @api_call("search_repositories")
     def search_repositories(self, query: str, sort: str = "stars", order: str = "desc", 
                            per_page: int = 100, page: int = 1) -> Dict[str, Any]:
         """
@@ -463,6 +505,7 @@ class GitHubAPI:
         
         return self.request("GET", "search/repositories", params)
     
+    @api_call("get_contributor")
     def get_contributor(self, username: str) -> Dict[str, Any]:
         """
         Rufe Informationen zu einem Contributor ab.
@@ -476,6 +519,7 @@ class GitHubAPI:
         endpoint = f"users/{username}"
         return self.request("GET", endpoint)
     
+    @api_call("get_repository_contributors")
     def get_repository_contributors(self, owner: str, repo: str, per_page: int = 100, page: int = 1) -> List[Dict[str, Any]]:
         """
         Rufe die Contributors eines Repositories ab.
@@ -498,6 +542,7 @@ class GitHubAPI:
         
         return self.request("GET", endpoint, params)
     
+    @api_call("get_repository_contributors_count")
     def get_repository_contributors_count(self, owner: str, repo: str) -> int:
         """
         Rufe die Anzahl der Contributors eines Repositories ab.
@@ -548,6 +593,7 @@ class GitHubAPI:
             logger.warning(f"Fehler beim Abrufen der Contributors-Anzahl für {owner}/{repo}: {e}")
             return 0
     
+    @api_call("get_organization")
     def get_organization(self, org_name: str) -> Dict[str, Any]:
         """
         Rufe Informationen zu einer Organisation ab.
@@ -561,6 +607,7 @@ class GitHubAPI:
         endpoint = f"orgs/{org_name}"
         return self.request("GET", endpoint)
     
+    @api_call("get_organization_repositories")
     def get_organization_repositories(self, org_name: str, per_page: int = 100, page: int = 1) -> List[Dict[str, Any]]:
         """
         Rufe die Repositories einer Organisation ab.
@@ -581,6 +628,7 @@ class GitHubAPI:
         
         return self.request("GET", endpoint, params)
     
+    @api_call("get_repository_commits")
     def get_repository_commits(self, owner: str, repo: str, per_page: int = 100, page: int = 1) -> List[Dict[str, Any]]:
         """
         Rufe die Commits eines Repositories ab.
@@ -625,6 +673,7 @@ class GitHubAPI:
         """
         rate_limits = {}
         warnings = []
+        critical_warnings = []
         
         for token, client in self.clients.items():
             try:
@@ -641,24 +690,42 @@ class GitHubAPI:
                 # Berechne Prozentsatz der verbleibenden Anfragen
                 percent_remaining = (remaining / limit) * 100 if limit > 0 else 0
                 
+                # Berechne Zeit bis zum Reset
+                now = datetime.now().timestamp()
+                minutes_to_reset = max(0, reset_time - now) / 60
+                reset_utc = datetime.fromtimestamp(reset_time).astimezone(tz.tzutc())
+                
                 rate_limits[token] = {
                     'limit': limit,
                     'remaining': remaining,
                     'reset_time': reset_time,
                     'percent_remaining': percent_remaining,
-                    'reset_datetime': datetime.fromtimestamp(reset_time).strftime('%Y-%m-%d %H:%M:%S')
+                    'reset_datetime': datetime.fromtimestamp(reset_time).strftime('%Y-%m-%d %H:%M:%S'),
+                    'reset_utc': reset_utc.strftime('%H:%M UTC'),
+                    'minutes_to_reset': minutes_to_reset
                 }
                 
                 # Prüfe, ob der Schwellenwert unterschritten wurde
                 if percent_remaining < threshold_percent:
-                    warning_msg = f"Rate-Limit-Warnung: Token {token[:7]}... hat nur noch {remaining} von {limit} Anfragen übrig ({percent_remaining:.1f}%). Reset um {rate_limits[token]['reset_datetime']}"
+                    warning_msg = f"[RateLimit-Warnung] Token {token[:7]}... hat nur noch {remaining} von {limit} Anfragen übrig ({percent_remaining:.1f}%). Reset in {minutes_to_reset:.1f} Minuten ({reset_utc.strftime('%H:%M')} UTC)"
                     warnings.append(warning_msg)
                     logger.warning(warning_msg)
+                    
+                    # Kritische Warnung, wenn fast keine Anfragen mehr übrig sind
+                    if remaining < 50:
+                        critical_msg = f"[RateLimit-KRITISCH] Token {token[:7]}... hat nur noch {remaining} Anfragen übrig! Reset in {minutes_to_reset:.1f} Minuten."
+                        critical_warnings.append(critical_msg)
+                        logger.critical(critical_msg)
+                        print(f"\n{critical_msg}\n")
             except Exception as e:
-                logger.error(f"Fehler beim Abrufen des Rate-Limits für Token {token[:7]}...: {e}")
+                error_msg = f"Fehler beim Abrufen des Rate-Limits für Token {token[:7]}...: {e}"
+                logger.error(error_msg)
+                warnings.append(error_msg)
         
         return {
             'rate_limits': rate_limits,
             'warnings': warnings,
-            'has_warnings': len(warnings) > 0
+            'critical_warnings': critical_warnings,
+            'has_warnings': len(warnings) > 0,
+            'has_critical': len(critical_warnings) > 0
         }
