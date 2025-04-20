@@ -1,0 +1,1386 @@
+{
+  "oslo, norway": {
+    "country_code": "NO",
+    "country": "Norway",
+    "region": "Oslo",
+    "latitude": 59.9133301,
+    "longitude": 10.7389701,
+    "formatted_address": "Oslo, Norway"
+  },
+  "bentonville, ar": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Arkansas",
+    "latitude": 36.3728538,
+    "longitude": -94.2088172,
+    "formatted_address": "Bentonville, Benton County, Arkansas, United States"
+  },
+  "los angeles, ca": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 34.0522,
+    "longitude": -118.2437,
+    "formatted_address": "Los Angeles, CA, United States"
+  },
+  "portland, or": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Oregon",
+    "latitude": 45.5202471,
+    "longitude": -122.674194,
+    "formatted_address": "Portland, Multnomah County, Oregon, United States"
+  },
+  "melbourne, australia": {
+    "country_code": "AU",
+    "country": "Australia",
+    "region": "Victoria",
+    "latitude": -37.8142454,
+    "longitude": 144.9631732,
+    "formatted_address": "Melbourne, City of Melbourne, Victoria, Australia"
+  },
+  "canada": {
+    "country_code": "CA",
+    "country": "Canada",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Canada"
+  },
+  "bretagne": {
+    "country_code": "FR",
+    "country": "France",
+    "region": "Brittany",
+    "latitude": 48.2640845,
+    "longitude": -2.9202408,
+    "formatted_address": "Brittany, Metropolitan France, France"
+  },
+  "menlo park, ca": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 37.4519671,
+    "longitude": -122.177992,
+    "formatted_address": "Menlo Park, San Mateo County, California, 94025, United States"
+  },
+  "kumamoto": {
+    "country_code": "JP",
+    "country": "Japan",
+    "region": "Kumamoto Prefecture",
+    "latitude": 32.6450475,
+    "longitude": 130.6341345,
+    "formatted_address": "Kumamoto Prefecture, Japan"
+  },
+  "new york, ny": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "New York",
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "formatted_address": "New York, NY, United States"
+  },
+  "germany": {
+    "country_code": "DE",
+    "country": "Germany",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Germany"
+  },
+  "nj": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "New Jersey",
+    "latitude": 40.0757384,
+    "longitude": -74.4041622,
+    "formatted_address": "New Jersey, United States"
+  },
+  "san francisco, ca": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "formatted_address": "San Francisco, CA, United States"
+  },
+  "cambridge, ma": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Massachusetts",
+    "latitude": 42.3786343,
+    "longitude": -71.131738,
+    "formatted_address": "Cambridge, Middlesex County, Massachusetts, United States"
+  },
+  "maryland": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Maryland",
+    "latitude": 39.5162401,
+    "longitude": -76.9382069,
+    "formatted_address": "Maryland, United States"
+  },
+  "tokyo": {
+    "country_code": "JP",
+    "country": "Japan",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Japan"
+  },
+  "helsinki, finland": {
+    "country_code": "FI",
+    "country": "Finland",
+    "region": "Uusimaa",
+    "latitude": 60.1674881,
+    "longitude": 24.9427473,
+    "formatted_address": "Helsinki, Helsinki sub-region, Uusimaa, Mainland Finland, Finland"
+  },
+  "brisbane, australia": {
+    "country_code": "AU",
+    "country": "Australia",
+    "region": "Queensland",
+    "latitude": -27.4689682,
+    "longitude": 153.0234991,
+    "formatted_address": "City of Brisbane, Queensland, Australia"
+  },
+  "shenzhen, china": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Guangdong Province",
+    "latitude": 22.5445741,
+    "longitude": 114.0545429,
+    "formatted_address": "Shenzhen, Guangdong Province, China"
+  },
+  "sofia": {
+    "country_code": "BG",
+    "country": "Bulgaria",
+    "region": "Sofia-City",
+    "latitude": 42.6977028,
+    "longitude": 23.3217359,
+    "formatted_address": "Sofia, Sredec, Sofia City, Sofia-City, Bulgaria"
+  },
+  "taipei, taiwan": {
+    "country_code": "TW",
+    "country": "Taiwan",
+    "region": "Taipei",
+    "latitude": 25.0375198,
+    "longitude": 121.5636796,
+    "formatted_address": "Taipei, Taiwan"
+  },
+  "montenegro": {
+    "country_code": "ME",
+    "country": "Montenegro",
+    "region": "",
+    "latitude": 42.9868853,
+    "longitude": 19.5180992,
+    "formatted_address": "Montenegro"
+  },
+  "tokyo, japan": {
+    "country_code": "JP",
+    "country": "Japan",
+    "region": "Tokyo",
+    "latitude": 35.6768601,
+    "longitude": 139.7638947,
+    "formatted_address": "Tokyo, Japan"
+  },
+  "lenapehoking": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Pennsylvania",
+    "latitude": 40.0437656,
+    "longitude": -75.2878273,
+    "formatted_address": "Lenapehoking, Scott Road, Gladwyne, Lower Merion Township, Montgomery County, Pennsylvania, 19035, United States"
+  },
+  "pittsburgh, pa, usa": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Pennsylvania",
+    "latitude": 40.4416941,
+    "longitude": -79.9900861,
+    "formatted_address": "Pittsburgh, Allegheny County, Pennsylvania, United States"
+  },
+  "united kingdom": {
+    "country_code": "GB",
+    "country": "United Kingdom",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "United Kingdom"
+  },
+  "florida": {
+    "country_code": "US",
+    "country": "United States",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "United States"
+  },
+  "eindhoven, the netherlands": {
+    "country_code": "NL",
+    "country": "Netherlands",
+    "region": "North Brabant",
+    "latitude": 51.4392648,
+    "longitude": 5.478633,
+    "formatted_address": "Eindhoven, North Brabant, Netherlands"
+  },
+  "bay area | bend, oregon": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Oregon",
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "United States"
+  },
+  "saint louis, mo": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Missouri",
+    "latitude": 38.6280278,
+    "longitude": -90.1910154,
+    "formatted_address": "St. Louis, Missouri, United States"
+  },
+  "montreal": {
+    "country_code": "CA",
+    "country": "Canada",
+    "region": "Quebec",
+    "latitude": 45.5031824,
+    "longitude": -73.5698065,
+    "formatted_address": "Montreal, Urban agglomeration of Montreal, Montreal (administrative region), Quebec, Canada"
+  },
+  "chicago": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Illinois",
+    "latitude": 41.8755616,
+    "longitude": -87.6244212,
+    "formatted_address": "Chicago, Cook County, Illinois, United States"
+  },
+  "czech republic": {
+    "country_code": "CZ",
+    "country": "Czechia",
+    "region": "",
+    "latitude": 49.7439047,
+    "longitude": 15.3381061,
+    "formatted_address": "Czechia"
+  },
+  "seattle, wa": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Washington",
+    "latitude": 47.6038321,
+    "longitude": -122.330062,
+    "formatted_address": "Seattle, King County, Washington, United States"
+  },
+  "st louis, mo": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Missouri",
+    "latitude": 38.6280278,
+    "longitude": -90.1910154,
+    "formatted_address": "St. Louis, Missouri, United States"
+  },
+  "san francisco": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 37.7792588,
+    "longitude": -122.4193286,
+    "formatted_address": "San Francisco, California, United States"
+  },
+  "amsterdam, netherlands": {
+    "country_code": "NL",
+    "country": "Netherlands",
+    "region": "North Holland",
+    "latitude": 52.3730796,
+    "longitude": 4.8924534,
+    "formatted_address": "Amsterdam, North Holland, Netherlands"
+  },
+  "tampa, fl": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Florida",
+    "latitude": 27.9477595,
+    "longitude": -82.458444,
+    "formatted_address": "Tampa, Hillsborough County, Florida, United States"
+  },
+  "new york": {
+    "country_code": "US",
+    "country": "United States",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "United States"
+  },
+  "fribourg, switzerland": {
+    "country_code": "CH",
+    "country": "Switzerland",
+    "region": "Fribourg",
+    "latitude": 46.6789116,
+    "longitude": 7.1027113,
+    "formatted_address": "Fribourg, Switzerland"
+  },
+  "sergipe, brazil": {
+    "country_code": "BR",
+    "country": "Brazil",
+    "region": "Sergipe",
+    "latitude": -10.6743911,
+    "longitude": -37.3773519,
+    "formatted_address": "Sergipe, Northeast Region, Brazil"
+  },
+  "berlin": {
+    "country_code": "DE",
+    "country": "Germany",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Germany"
+  },
+  "seattle": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Washington",
+    "latitude": 47.6038321,
+    "longitude": -122.330062,
+    "formatted_address": "Seattle, King County, Washington, United States"
+  },
+  "lille - nord pas-de-calais": {
+    "country_code": "FR",
+    "country": "France",
+    "region": "Hauts-de-France",
+    "latitude": 50.42701,
+    "longitude": 3.0604149,
+    "formatted_address": "Direction Lille Lens, Rue Lazare Carnot, Leforest, Lens, Pas-de-Calais, Hauts-de-France, Metropolitan France, 62790, France"
+  },
+  "stanford": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 37.427467,
+    "longitude": -122.1702445,
+    "formatted_address": "Stanford, Santa Clara County, California, United States"
+  },
+  "porto alegre, brazil": {
+    "country_code": "BR",
+    "country": "Brazil",
+    "region": "Rio Grande do Sul",
+    "latitude": -30.0324999,
+    "longitude": -51.2303767,
+    "formatted_address": "Porto Alegre, Região Geográfica Imediata de Porto Alegre, Metropolitan Region of Porto Alegre, Região Geográfica Intermediária de Porto Alegre, Rio Grande do Sul, South Region, Brazil"
+  },
+  "new zealand": {
+    "country_code": "NZ",
+    "country": "New Zealand",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "New Zealand"
+  },
+  "edmonton, canada": {
+    "country_code": "CA",
+    "country": "Canada",
+    "region": "Alberta",
+    "latitude": 53.5462055,
+    "longitude": -113.491241,
+    "formatted_address": "Edmonton, Alberta, Canada"
+  },
+  "memphis, tn": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Tennessee",
+    "latitude": 35.1460249,
+    "longitude": -90.0517638,
+    "formatted_address": "Memphis, Shelby County, West Tennessee, Tennessee, United States"
+  },
+  "san fernando, california, united states": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 34.28497,
+    "longitude": -118.437652,
+    "formatted_address": "San Fernando, Los Angeles County, California, United States"
+  },
+  "copenhagen, denmark": {
+    "country_code": "DK",
+    "country": "Denmark",
+    "region": "Capital Region of Denmark",
+    "latitude": 55.6867243,
+    "longitude": 12.5700724,
+    "formatted_address": "Copenhagen, Copenhagen Municipality, Capital Region of Denmark, 1357, Denmark"
+  },
+  "russia, yekaterinburg": {
+    "country_code": "RU",
+    "country": "Russia",
+    "region": "Sverdlovsk Oblast",
+    "latitude": 56.839104,
+    "longitude": 60.60825,
+    "formatted_address": "Yekaterinburg, Yekaterinburg Municipality, Sverdlovsk Oblast, Ural Federal District, Russia"
+  },
+  "cincinnati, oh": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Ohio",
+    "latitude": 39.1014537,
+    "longitude": -84.5124602,
+    "formatted_address": "Cincinnati, Hamilton County, Ohio, United States"
+  },
+  "france": {
+    "country_code": "FR",
+    "country": "France",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "France"
+  },
+  "espoo, finland": {
+    "country_code": "FI",
+    "country": "Finland",
+    "region": "Uusimaa",
+    "latitude": 60.2049651,
+    "longitude": 24.6559808,
+    "formatted_address": "Espoo, Helsinki sub-region, Uusimaa, Mainland Finland, Finland"
+  },
+  "raleigh, nc": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "North Carolina",
+    "latitude": 35.7803977,
+    "longitude": -78.6390989,
+    "formatted_address": "Raleigh, Wake County, North Carolina, United States"
+  },
+  "london, uk": {
+    "country_code": "GB",
+    "country": "United Kingdom",
+    "region": "England",
+    "latitude": 51.5074456,
+    "longitude": -0.1277653,
+    "formatted_address": "London, Greater London, England, United Kingdom"
+  },
+  "australia": {
+    "country_code": "AU",
+    "country": "Australia",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Australia"
+  },
+  "arakawa-ku, tokyo, japan": {
+    "country_code": "JP",
+    "country": "Japan",
+    "region": "Arakawa",
+    "latitude": 35.737529,
+    "longitude": 139.78131,
+    "formatted_address": "Arakawa, Tokyo, 116-0000, Japan"
+  },
+  "portugal": {
+    "country_code": "PT",
+    "country": "Portugal",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Portugal"
+  },
+  "belgium": {
+    "country_code": "BE",
+    "country": "Belgium",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Belgium"
+  },
+  "orlando, fl": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Florida",
+    "latitude": 28.5421109,
+    "longitude": -81.3790304,
+    "formatted_address": "Orlando, Orange County, Florida, United States"
+  },
+  "sydney, australia": {
+    "country_code": "AU",
+    "country": "Australia",
+    "region": "New South Wales",
+    "latitude": -33.8698439,
+    "longitude": 151.2082848,
+    "formatted_address": "Sydney, Council of the City of Sydney, New South Wales, Australia"
+  },
+  "baltimore, md": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Maryland",
+    "latitude": 39.2908816,
+    "longitude": -76.610759,
+    "formatted_address": "Baltimore, Maryland, United States"
+  },
+  "zurich": {
+    "country_code": "CH",
+    "country": "Switzerland",
+    "region": "Zurich",
+    "latitude": 47.3744489,
+    "longitude": 8.5410422,
+    "formatted_address": "Zurich, District Zurich, Zurich, Switzerland"
+  },
+  "alphen aan den rijn, the netherlands": {
+    "country_code": "NL",
+    "country": "Netherlands",
+    "region": "South Holland",
+    "latitude": 52.1131403,
+    "longitude": 4.6408412,
+    "formatted_address": "Alphen aan den Rijn, South Holland, Netherlands"
+  },
+  "utah county": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Utah",
+    "latitude": 40.177058,
+    "longitude": -111.6910719,
+    "formatted_address": "Utah County, Utah, United States"
+  },
+  "alkmaar, the netherlands": {
+    "country_code": "NL",
+    "country": "Netherlands",
+    "region": "North Holland",
+    "latitude": 52.6008538,
+    "longitude": 4.8170994,
+    "formatted_address": "Alkmaar, North Holland, Netherlands"
+  },
+  "beijing": {
+    "country_code": "CN",
+    "country": "China",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "China"
+  },
+  "the netherlands": {
+    "country_code": "NL",
+    "country": "Netherlands",
+    "region": "",
+    "latitude": 52.2434979,
+    "longitude": 5.6343227,
+    "formatted_address": "Netherlands"
+  },
+  "munich": {
+    "country_code": "DE",
+    "country": "Germany",
+    "region": "Bavaria",
+    "latitude": 48.1371079,
+    "longitude": 11.5753822,
+    "formatted_address": "Munich, Bavaria, Germany"
+  },
+  "japan": {
+    "country_code": "JP",
+    "country": "Japan",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Japan"
+  },
+  "devon, uk": {
+    "country_code": "GB",
+    "country": "United Kingdom",
+    "region": "England",
+    "latitude": 50.7241405,
+    "longitude": -3.6607788,
+    "formatted_address": "Devon, England, United Kingdom"
+  },
+  "arizona": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Arizona",
+    "latitude": 34.395342,
+    "longitude": -111.763275,
+    "formatted_address": "Arizona, United States"
+  },
+  "leeds, uk": {
+    "country_code": "GB",
+    "country": "United Kingdom",
+    "region": "England",
+    "latitude": 53.7974185,
+    "longitude": -1.5437941,
+    "formatted_address": "Leeds, West Yorkshire, England, United Kingdom"
+  },
+  "austin, tx, usa": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Texas",
+    "latitude": 30.2711286,
+    "longitude": -97.7436995,
+    "formatted_address": "Austin, Travis County, Texas, United States"
+  },
+  "malaysia": {
+    "country_code": "MY",
+    "country": "Malaysia",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Malaysia"
+  },
+  "beijing, china": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Beijing",
+    "latitude": 40.190632,
+    "longitude": 116.412144,
+    "formatted_address": "Beijing, China"
+  },
+  "austin, tx": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Texas",
+    "latitude": 30.2711286,
+    "longitude": -97.7436995,
+    "formatted_address": "Austin, Travis County, Texas, United States"
+  },
+  "new mexico": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "New Mexico",
+    "latitude": 34.5802074,
+    "longitude": -105.996047,
+    "formatted_address": "New Mexico, United States"
+  },
+  "italy": {
+    "country_code": "IT",
+    "country": "Italy",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Italy"
+  },
+  "toronto": {
+    "country_code": "CA",
+    "country": "Canada",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Canada"
+  },
+  "maine": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Maine",
+    "latitude": 45.709097,
+    "longitude": -68.8590201,
+    "formatted_address": "Maine, United States"
+  },
+  "namur, belgium": {
+    "country_code": "BE",
+    "country": "Belgium",
+    "region": "Namur",
+    "latitude": 50.2602009,
+    "longitude": 4.9107326,
+    "formatted_address": "Belgium, Pont Charles de Gaulle, Wespin, Dinant, Namur, Wallonia, 5500, Belgium"
+  },
+  "toulouse, france": {
+    "country_code": "FR",
+    "country": "France",
+    "region": "Occitania",
+    "latitude": 43.6044622,
+    "longitude": 1.4442469,
+    "formatted_address": "Toulouse, Haute-Garonne, Occitania, Metropolitan France, France"
+  },
+  "buenos aires, argentina": {
+    "country_code": "AR",
+    "country": "Argentina",
+    "region": "Buenos Aires",
+    "latitude": -33.3657998,
+    "longitude": -60.19955,
+    "formatted_address": "Argentina, 9 de Julio, San Nicolás de los Arroyos, Partido de San Nicolás, Buenos Aires, 2900, Argentina"
+  },
+  "san francisco bay area": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 37.7884969,
+    "longitude": -122.3558473,
+    "formatted_address": "San Francisco Bay Area, San Francisco, California, 94110, United States"
+  },
+  "portland, oregon, usa": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Oregon",
+    "latitude": 45.5202471,
+    "longitude": -122.674194,
+    "formatted_address": "Portland, Multnomah County, Oregon, United States"
+  },
+  "shelbyville, ky": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Kentucky",
+    "latitude": 38.2120144,
+    "longitude": -85.2235666,
+    "formatted_address": "Shelbyville, Shelby County, Kentucky, 40065, United States"
+  },
+  "netherlands": {
+    "country_code": "NL",
+    "country": "Netherlands",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Netherlands"
+  },
+  "lund, sweden": {
+    "country_code": "SE",
+    "country": "Sweden",
+    "region": "Skåne County",
+    "latitude": 55.7029296,
+    "longitude": 13.1929449,
+    "formatted_address": "Lund, Lund Municipality, Skåne County, Sweden"
+  },
+  "lausanne": {
+    "country_code": "CH",
+    "country": "Switzerland",
+    "region": "Vaud",
+    "latitude": 46.5218269,
+    "longitude": 6.6327025,
+    "formatted_address": "Lausanne, District de Lausanne, Vaud, Switzerland"
+  },
+  "sunnyvale": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 37.3688301,
+    "longitude": -122.036349,
+    "formatted_address": "Sunnyvale, Santa Clara County, California, United States"
+  },
+  "toronto, canada": {
+    "country_code": "CA",
+    "country": "Canada",
+    "region": "Ontario",
+    "latitude": 43.6534817,
+    "longitude": -79.3839347,
+    "formatted_address": "Toronto, Golden Horseshoe, Ontario, Canada"
+  },
+  "sweden": {
+    "country_code": "SE",
+    "country": "Sweden",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Sweden"
+  },
+  "united states, california": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 36.7014631,
+    "longitude": -118.755997,
+    "formatted_address": "California, United States"
+  },
+  "hangzhou": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Zhejiang",
+    "latitude": 30.2489634,
+    "longitude": 120.2052342,
+    "formatted_address": "Hangzhou City, Zhejiang, China"
+  },
+  "miyako-shi, iwate, japan": {
+    "country_code": "JP",
+    "country": "Japan",
+    "region": "Iwate Prefecture",
+    "latitude": 39.6395835,
+    "longitude": 141.9461177,
+    "formatted_address": "Miyako, Iwate Prefecture, Japan"
+  },
+  "north dakota": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "North Dakota",
+    "latitude": 47.6201461,
+    "longitude": -100.540737,
+    "formatted_address": "North Dakota, United States"
+  },
+  "paris, france": {
+    "country_code": "FR",
+    "country": "France",
+    "region": "Ile-de-France",
+    "latitude": 48.8588897,
+    "longitude": 2.320041,
+    "formatted_address": "Paris, Ile-de-France, Metropolitan France, France"
+  },
+  "canberra, australia": {
+    "country_code": "AU",
+    "country": "Australia",
+    "region": "Canberra",
+    "latitude": -35.2975906,
+    "longitude": 149.1012676,
+    "formatted_address": "Canberra, District of Canberra Central, Australian Capital Territory, 2601, Australia"
+  },
+  "china": {
+    "country_code": "CN",
+    "country": "China",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "China"
+  },
+  "hangzhou, china": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Zhejiang",
+    "latitude": 30.2489634,
+    "longitude": 120.2052342,
+    "formatted_address": "Hangzhou City, Zhejiang, China"
+  },
+  "boise, idaho": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Idaho",
+    "latitude": 43.6166163,
+    "longitude": -116.200886,
+    "formatted_address": "Boise, Ada County, Idaho, United States"
+  },
+  "stockholm, sweden": {
+    "country_code": "SE",
+    "country": "Sweden",
+    "region": "Stockholm County",
+    "latitude": 59.3251172,
+    "longitude": 18.0710935,
+    "formatted_address": "Stockholm, Stockholm Municipality, Stockholm County, 111 29, Sweden"
+  },
+  "shanghai": {
+    "country_code": "CN",
+    "country": "China",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "China"
+  },
+  "san jose": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 37.3361663,
+    "longitude": -121.890591,
+    "formatted_address": "San Jose, Santa Clara County, California, United States"
+  },
+  "amsterdam": {
+    "country_code": "NL",
+    "country": "Netherlands",
+    "region": "North Holland",
+    "latitude": 52.3730796,
+    "longitude": 4.8924534,
+    "formatted_address": "Amsterdam, North Holland, Netherlands"
+  },
+  "atlanta, ga": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Georgia",
+    "latitude": 33.7489924,
+    "longitude": -84.3902644,
+    "formatted_address": "Atlanta, Fulton County, Georgia, United States"
+  },
+  "london": {
+    "country_code": "GB",
+    "country": "United Kingdom",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "United Kingdom"
+  },
+  "fukuoka, japan": {
+    "country_code": "JP",
+    "country": "Japan",
+    "region": "Fukuoka Prefecture",
+    "latitude": 33.6251241,
+    "longitude": 130.6180016,
+    "formatted_address": "Fukuoka Prefecture, Japan"
+  },
+  "cambridge ma": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Massachusetts",
+    "latitude": 42.3786343,
+    "longitude": -71.131738,
+    "formatted_address": "Cambridge, Middlesex County, Massachusetts, United States"
+  },
+  "edinburgh": {
+    "country_code": "GB",
+    "country": "United Kingdom",
+    "region": "Scotland",
+    "latitude": 55.9533456,
+    "longitude": -3.1883749,
+    "formatted_address": "City of Edinburgh, Scotland, United Kingdom"
+  },
+  "paris": {
+    "country_code": "FR",
+    "country": "France",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "France"
+  },
+  "ukraine": {
+    "country_code": "UA",
+    "country": "Ukraine",
+    "region": "",
+    "latitude": 49.4871968,
+    "longitude": 31.2718321,
+    "formatted_address": "Ukraine"
+  },
+  "kharkiv, ukraine": {
+    "country_code": "UA",
+    "country": "Ukraine",
+    "region": "Kharkiv Oblast",
+    "latitude": 49.9923181,
+    "longitude": 36.2310146,
+    "formatted_address": "Kharkiv, Kharkiv Urban Hromada, Kharkiv Raion, Kharkiv Oblast, Ukraine"
+  },
+  "palermo lakes": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Ohio",
+    "latitude": 40.5014532,
+    "longitude": -81.1476013,
+    "formatted_address": "Palermo-on-the-Lakes, Union Township, Carroll County, Ohio, United States"
+  },
+  "shelburne falls, ma, usa": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Massachusetts",
+    "latitude": 42.6037066,
+    "longitude": -72.7379468,
+    "formatted_address": "Shelburne Falls, Shelburne, Franklin County, Massachusetts, 01370, United States"
+  },
+  "denver, co": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Colorado",
+    "latitude": 39.7392364,
+    "longitude": -104.984862,
+    "formatted_address": "Denver, Colorado, United States"
+  },
+  "chicago, il": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Illinois",
+    "latitude": 41.8755616,
+    "longitude": -87.6244212,
+    "formatted_address": "Chicago, Cook County, Illinois, United States"
+  },
+  "berlin,germany": {
+    "country_code": "DE",
+    "country": "Germany",
+    "region": "Berlin",
+    "latitude": 52.510885,
+    "longitude": 13.3989367,
+    "formatted_address": "Berlin, Germany"
+  },
+  "china, hangzhou": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Zhejiang",
+    "latitude": 30.2489634,
+    "longitude": 120.2052342,
+    "formatted_address": "Hangzhou City, Zhejiang, China"
+  },
+  "stockholm": {
+    "country_code": "SE",
+    "country": "Sweden",
+    "region": "Stockholm County",
+    "latitude": 59.3251172,
+    "longitude": 18.0710935,
+    "formatted_address": "Stockholm, Stockholm Municipality, Stockholm County, 111 29, Sweden"
+  },
+  "rennes": {
+    "country_code": "FR",
+    "country": "France",
+    "region": "Brittany",
+    "latitude": 48.1113387,
+    "longitude": -1.6800198,
+    "formatted_address": "Rennes, Ille-et-Vilaine, Brittany, Metropolitan France, France"
+  },
+  "hangzhou, zhejiang, china": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Zhejiang",
+    "latitude": 30.2489634,
+    "longitude": 120.2052342,
+    "formatted_address": "Hangzhou City, Zhejiang, China"
+  },
+  "wolfsberg | austria": {
+    "country_code": "AT",
+    "country": "Austria",
+    "region": "Carinthia",
+    "latitude": 46.8390583,
+    "longitude": 14.8452061,
+    "formatted_address": "Wolfsberg, Bezirk Wolfsberg, Carinthia, 9400, Austria"
+  },
+  "✈": {},
+  "valencia, es": {
+    "country_code": "ES",
+    "country": "Spain",
+    "region": "Valencian Community",
+    "latitude": 39.4697065,
+    "longitude": -0.3763353,
+    "formatted_address": "Valencia, Comarca de València, Valencia, Valencian Community, Spain"
+  },
+  "hangzhou china": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Zhejiang",
+    "latitude": 30.2489634,
+    "longitude": 120.2052342,
+    "formatted_address": "Hangzhou City, Zhejiang, China"
+  },
+  "@nanjing": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Jiangsu",
+    "latitude": 32.0438284,
+    "longitude": 118.7788631,
+    "formatted_address": "Nanjing City, Jiangsu, China"
+  },
+  "amsterdam, the netherlands": {
+    "country_code": "NL",
+    "country": "Netherlands",
+    "region": "North Holland",
+    "latitude": 52.3730796,
+    "longitude": 4.8924534,
+    "formatted_address": "Amsterdam, North Holland, Netherlands"
+  },
+  "israel": {
+    "country_code": "IL",
+    "country": "Israel",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Israel"
+  },
+  "norway": {
+    "country_code": "NO",
+    "country": "Norway",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Norway"
+  },
+  "eindhoven, netherlands": {
+    "country_code": "NL",
+    "country": "Netherlands",
+    "region": "North Brabant",
+    "latitude": 51.4392648,
+    "longitude": 5.478633,
+    "formatted_address": "Eindhoven, North Brabant, Netherlands"
+  },
+  "malta": {
+    "country_code": "MT",
+    "country": "Malta",
+    "region": "",
+    "latitude": 35.8885993,
+    "longitude": 14.4476911,
+    "formatted_address": "Malta"
+  },
+  "spain": {
+    "country_code": "ES",
+    "country": "Spain",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Spain"
+  },
+  "italia": {
+    "country_code": "IT",
+    "country": "Italy",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Italy"
+  },
+  "chengdu": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Sichuan",
+    "latitude": 30.6598628,
+    "longitude": 104.0633717,
+    "formatted_address": "Chengdu, Sichuan, China"
+  },
+  "perth, australia": {
+    "country_code": "AU",
+    "country": "Australia",
+    "region": "Western Australia",
+    "latitude": -31.9558933,
+    "longitude": 115.8605855,
+    "formatted_address": "City of Perth, Western Australia, Australia"
+  },
+  "bethesda, md": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Maryland",
+    "latitude": 38.9812725,
+    "longitude": -77.1233587,
+    "formatted_address": "Bethesda, Montgomery County, Maryland, United States"
+  },
+  "bay area": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 37.7884969,
+    "longitude": -122.3558473,
+    "formatted_address": "San Francisco Bay Area, San Francisco, California, 94110, United States"
+  },
+  "milano": {
+    "country_code": "IT",
+    "country": "Italy",
+    "region": "Lombardy",
+    "latitude": 45.4641943,
+    "longitude": 9.1896346,
+    "formatted_address": "Milan, Lombardy, Italy"
+  },
+  "seoul, republic of korea": {
+    "country_code": "KR",
+    "country": "South Korea",
+    "region": "Seoul",
+    "latitude": 37.5666791,
+    "longitude": 126.9782914,
+    "formatted_address": "Seoul, South Korea"
+  },
+  "victoria, bc, canada": {
+    "country_code": "CA",
+    "country": "Canada",
+    "region": "British Columbia",
+    "latitude": 48.4283182,
+    "longitude": -123.364953,
+    "formatted_address": "Victoria, Capital Regional District, British Columbia, Canada"
+  },
+  "poitiers, france": {
+    "country_code": "FR",
+    "country": "France",
+    "region": "Nouvelle-Aquitaine",
+    "latitude": 46.5802596,
+    "longitude": 0.340196,
+    "formatted_address": "Poitiers, Vienne, Nouvelle-Aquitaine, Metropolitan France, 86000, France"
+  },
+  "amman, jordan": {
+    "country_code": "JO",
+    "country": "Jordan",
+    "region": "Amman",
+    "latitude": 31.9515694,
+    "longitude": 35.9239625,
+    "formatted_address": "Amman, Amman Sub-District, Amman Qasabah District, Amman, 11118, Jordan"
+  },
+  "são paulo - brasil": {
+    "country_code": "BR",
+    "country": "Brazil",
+    "region": "São Paulo",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824,
+    "formatted_address": "São Paulo, Região Imediata de São Paulo, Região Metropolitana de São Paulo, Região Geográfica Intermediária de São Paulo, São Paulo, Southeast Region, Brazil"
+  },
+  "aarhus, dk": {
+    "country_code": "DK",
+    "country": "Denmark",
+    "region": "Central Denmark Region",
+    "latitude": 56.1496278,
+    "longitude": 10.2134046,
+    "formatted_address": "Aarhus, Aarhus Municipality, Central Denmark Region, 8000, Denmark"
+  },
+  "kraków, poland": {
+    "country_code": "PL",
+    "country": "Poland",
+    "region": "Lesser Poland Voivodeship",
+    "latitude": 50.0619474,
+    "longitude": 19.9368564,
+    "formatted_address": "Krakow, Lesser Poland Voivodeship, Poland"
+  },
+  "palo alto, california": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 37.4443293,
+    "longitude": -122.1598465,
+    "formatted_address": "Palo Alto, Santa Clara County, California, United States"
+  },
+  "ahmedabad": {
+    "country_code": "IN",
+    "country": "India",
+    "region": "Gujarat",
+    "latitude": 23.0215374,
+    "longitude": 72.5800568,
+    "formatted_address": "Ahmedabad, Gujarat, 380001, India"
+  },
+  "the stygian abyss": {
+    "country_code": "SS",
+    "country": "South Sudan",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "South Sudan"
+  },
+  "vienna, austria": {
+    "country_code": "AT",
+    "country": "Austria",
+    "region": "Vienna",
+    "latitude": 48.2083537,
+    "longitude": 16.3725042,
+    "formatted_address": "Vienna, Austria"
+  },
+  "shanghai. china": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Shanghai",
+    "latitude": 31.2312707,
+    "longitude": 121.4700152,
+    "formatted_address": "Shanghai, China"
+  },
+  "world wide web": {},
+  "italy, united kingdom, switzerland": {},
+  "around the world": {},
+  "satan's lawn": {},
+  "all over the world": {},
+  "tel aviv, vilnius, dnipropetrovsk, kiev, san francisco, miami, nyc": {},
+  "hallandale, fl": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Florida",
+    "latitude": 25.9812025,
+    "longitude": -80.148379,
+    "formatted_address": "Hallandale Beach, Broward County, Florida, 33009, United States"
+  },
+  "new york city": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "New York",
+    "latitude": 40.7127281,
+    "longitude": -74.0060152,
+    "formatted_address": "New York, United States"
+  },
+  "hythe, uk": {
+    "country_code": "GB",
+    "country": "United Kingdom",
+    "region": "England",
+    "latitude": 51.0691421,
+    "longitude": 1.0841634,
+    "formatted_address": "Hythe, Folkestone and Hythe District, Kent, England, United Kingdom"
+  },
+  "groningen": {
+    "country_code": "NL",
+    "country": "Netherlands",
+    "region": "Groningen",
+    "latitude": 53.2190652,
+    "longitude": 6.5680077,
+    "formatted_address": "Groningen, Netherlands"
+  },
+  "shenzhen china": {
+    "country_code": "CN",
+    "country": "China",
+    "region": "Guangdong Province",
+    "latitude": 22.5445741,
+    "longitude": 114.0545429,
+    "formatted_address": "Shenzhen, Guangdong Province, China"
+  },
+  "united states of america": {
+    "country_code": "US",
+    "country": "United States",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "United States"
+  },
+  "mountain view, ca": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "California",
+    "latitude": 37.3861,
+    "longitude": -122.0839,
+    "formatted_address": "Mountain View, CA, United States"
+  },
+  "warsaw, poland": {
+    "country_code": "PL",
+    "country": "Poland",
+    "region": "Masovian Voivodeship",
+    "latitude": 52.2319581,
+    "longitude": 21.0067249,
+    "formatted_address": "Warsaw, Masovian Voivodeship, Poland"
+  },
+  "tampere, helsinki, finland": {
+    "country_code": "FI",
+    "country": "Finland",
+    "region": "Uusimaa",
+    "latitude": 60.6133936,
+    "longitude": 24.8059649,
+    "formatted_address": "Helsinki-Tampere moottoritie, Nikinharju, Veikkari, Hyvinkää, Helsinki sub-region, Uusimaa, Mainland Finland, 05840, Finland"
+  },
+  "brazil": {
+    "country_code": "BR",
+    "country": "Brazil",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Brazil"
+  },
+  "pittsburgh, pa": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Pennsylvania",
+    "latitude": 40.4416941,
+    "longitude": -79.9900861,
+    "formatted_address": "Pittsburgh, Allegheny County, Pennsylvania, United States"
+  },
+  "são paulo, brazil": {
+    "country_code": "BR",
+    "country": "Brazil",
+    "region": "São Paulo",
+    "latitude": -23.5506507,
+    "longitude": -46.6333824,
+    "formatted_address": "São Paulo, Região Imediata de São Paulo, Região Metropolitana de São Paulo, Região Geográfica Intermediária de São Paulo, São Paulo, Southeast Region, Brazil"
+  },
+  "singapore": {
+    "country_code": "SG",
+    "country": "Singapore",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Singapore"
+  },
+  "redmond, wa": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Washington",
+    "latitude": 47.6694141,
+    "longitude": -122.1238767,
+    "formatted_address": "Redmond, King County, Washington, 98052, United States"
+  },
+  "cleveland, ohio usa": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Ohio",
+    "latitude": 41.4996574,
+    "longitude": -81.6936772,
+    "formatted_address": "Cleveland, Cuyahoga County, Ohio, United States"
+  },
+  "india": {
+    "country_code": "IN",
+    "country": "India",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "India"
+  },
+  "taiwan": {
+    "country_code": "TW",
+    "country": "Taiwan, Province of China",
+    "region": null,
+    "latitude": null,
+    "longitude": null,
+    "formatted_address": "Taiwan, Province of China"
+  },
+  "nottingham, uk": {
+    "country_code": "GB",
+    "country": "United Kingdom",
+    "region": "England",
+    "latitude": 52.9534193,
+    "longitude": -1.1496461,
+    "formatted_address": "Nottingham, Nottinghamshire, East Midlands, England, United Kingdom"
+  },
+  "the blockchain": {},
+  "penn state": {
+    "country_code": "US",
+    "country": "United States",
+    "region": "Pennsylvania",
+    "latitude": 40.8025835,
+    "longitude": -77.8559383,
+    "formatted_address": "Penn State University, Cottonwood Avenue, College Township, Centre County, Pennsylvania, 16801, United States"
+  }
+}

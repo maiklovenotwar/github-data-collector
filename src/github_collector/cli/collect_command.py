@@ -330,7 +330,7 @@ def interactive_mode(args: argparse.Namespace, api_client: GitHubAPI, db: GitHub
             
             else:  # log
                 print("\nPerformance-Zusammenfassung:")
-                performance_reporter.log_summary()
+                performance_reporter.to_log()
                 
     except KeyboardInterrupt:
         print("\nSammlung unterbrochen. Der Fortschritt wurde gespeichert und kann später fortgesetzt werden.")
@@ -339,7 +339,7 @@ def interactive_mode(args: argparse.Namespace, api_client: GitHubAPI, db: GitHub
         if enable_performance_tracking:
             print("\nPerformance-Daten bis zur Unterbrechung:")
             performance_reporter = PerformanceReporter(collector.performance_tracker)
-            performance_reporter.log_summary()
+            performance_reporter.to_log()
             
     except Exception as e:
         logger.error(f"Fehler bei der Repository-Sammlung: {e}")
@@ -428,7 +428,7 @@ def non_interactive_mode(args: argparse.Namespace, api_client: GitHubAPI, db: Gi
             
             else:  # log
                 logger.info("Performance-Zusammenfassung:")
-                performance_reporter.log_summary()
+                performance_reporter.to_log()
                 
     except KeyboardInterrupt:
         print("\nSammlung unterbrochen. Der Fortschritt wurde gespeichert und kann später fortgesetzt werden.")
@@ -437,7 +437,7 @@ def non_interactive_mode(args: argparse.Namespace, api_client: GitHubAPI, db: Gi
         if enable_performance_tracking:
             logger.info("Performance-Daten bis zur Unterbrechung:")
             performance_reporter = PerformanceReporter(collector.performance_tracker)
-            performance_reporter.log_summary()
+            performance_reporter.to_log()
             
     except Exception as e:
         logger.error(f"Fehler bei der Repository-Sammlung: {e}")
@@ -455,7 +455,7 @@ def main() -> int:
     
     # Initialisiere Performance-Tracking
     enable_tracking = not args.disable_performance_tracking and config.ENABLE_PERFORMANCE_TRACKING
-    performance_tracker = PerformanceTracker(enabled=enable_tracking)
+    performance_tracker = PerformanceTracker(enable_tracking=enable_tracking)
     
     # Richte API-Client ein
     api_client = setup_api_client()
@@ -464,7 +464,7 @@ def main() -> int:
     db_path = args.db_path or config.DEFAULT_DB_PATH
     
     # Initialisiere Datenbankverbindung
-    db = GitHubDatabase(db_path)
+    db = GitHubDatabase(str(db_path))
     
     try:
         # Zeige Datenbankstatistiken und beende, falls angefordert
@@ -497,7 +497,7 @@ def main() -> int:
             elif output_format == "csv" and output_path:
                 reporter.save_csv(output_path)
             else:
-                reporter.log_summary()
+                reporter.to_log()
         
         return 0
     

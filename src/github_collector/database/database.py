@@ -226,6 +226,67 @@ class GitHubDatabase:
         except Exception as e:
             logger.error(f"Fehler beim Abrufen aller Contributor-Logins: {e}")
             return []
+
+    def get_contributors(self, limit: Optional[int] = None) -> List[Contributor]:
+        """
+        Gibt alle Contributor-Objekte aus der Datenbank zurück.
+        Optional kann ein Limit angegeben werden.
+
+        Args:
+            limit: Maximale Anzahl der zurückgegebenen Contributors (optional)
+        Returns:
+            Liste von Contributor-Objekten
+        """
+        try:
+            query = self.session.query(Contributor)
+            if limit is not None:
+                query = query.limit(limit)
+            contributors = query.all()
+            return contributors
+        except Exception as e:
+            logger.error(f"Fehler beim Abrufen der Contributors: {e}")
+            return []
+
+
+    def get_contributors_without_country_code(self, limit: Optional[int] = None) -> List[Contributor]:
+        """
+        Gibt alle Contributor-Objekte zurück, deren country_code nicht gesetzt ist.
+        Optional kann ein Limit angegeben werden.
+        
+        Args:
+            limit: Maximale Anzahl der zurückgegebenen Contributors (optional)
+        Returns:
+            Liste von Contributor-Objekten ohne country_code
+        """
+        try:
+            query = self.session.query(Contributor).filter(Contributor.country_code.is_(None))
+            if limit is not None:
+                query = query.limit(limit)
+            contributors = query.all()
+            return contributors
+        except Exception as e:
+            logger.error(f"Fehler beim Abrufen der Contributors ohne Ländercode: {e}")
+            return []
+
+    def get_organizations_without_country_code(self, limit: Optional[int] = None) -> List[Organization]:
+        """
+        Gibt alle Organization-Objekte zurück, deren country_code nicht gesetzt ist.
+        Optional kann ein Limit angegeben werden.
+        
+        Args:
+            limit: Maximale Anzahl der zurückgegebenen Organisationen (optional)
+        Returns:
+            Liste von Organization-Objekten ohne country_code
+        """
+        try:
+            query = self.session.query(Organization).filter(Organization.country_code.is_(None))
+            if limit is not None:
+                query = query.limit(limit)
+            organizations = query.all()
+            return organizations
+        except Exception as e:
+            logger.error(f"Fehler beim Abrufen der Organisationen ohne Ländercode: {e}")
+            return []
     
     def get_all_organization_logins(self) -> List[str]:
         """

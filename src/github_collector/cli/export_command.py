@@ -65,7 +65,7 @@ def main() -> int:
         db_path = args.db_path or config.DEFAULT_DB_PATH
         
         # Initialisiere Datenbank
-        db = GitHubDatabase(db_path)
+        db = GitHubDatabase(str(db_path))
         
         # Bestimme die zu exportierenden Tabellen
         tables = []

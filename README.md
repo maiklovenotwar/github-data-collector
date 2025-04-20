@@ -94,6 +94,21 @@ github-data-collector/
 └── README.md              # Projektdokumentation
 ```
 
+## Tests ausführen
+
+Stelle sicher, dass pytest installiert ist:
+
+    pip install pytest
+
+Führe dann die Tests mit folgendem Befehl aus:
+
+    PYTHONPATH=src pytest
+
+Optional für Coverage:
+
+    pip install pytest-cov
+    PYTHONPATH=src pytest --cov=github_collector
+
 ## 📝 Lizenz
 
 Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe die [LICENSE](LICENSE)-Datei für Details.
