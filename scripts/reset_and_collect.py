@@ -8,12 +8,18 @@ und die Repository-Sammlung durchzuführen.
 """
 import os
 import sys
+import subprocess
+from pathlib import Path
 
 # Füge das src-Verzeichnis zum Python-Pfad hinzu
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 
+from github_collector.database.database import init_db
 from github_collector.cli.reset_command import main
+from github_collector.utils.logging_config import setup_logging
 
+from github_collector.config import RESET_LOG
+logger = setup_logging(log_file=RESET_LOG)
 
 def reset_database():
     """

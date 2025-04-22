@@ -14,13 +14,14 @@ import sys
 # Füge das src-Verzeichnis zum Python-Pfad hinzu, damit github_collector importiert werden kann
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 import argparse
+from github_collector.utils.logging_config import setup_logging
+from github_collector.config import LOG_DIR
 import logging
 from dotenv import load_dotenv
 
-# Log-Level über Umgebungsvariable oder direkt hier setzen
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s %(levelname)s %(message)s')
-logger = logging.getLogger(__name__)
+# Einheitliches Logging: Schreibe in eigene Logdatei im logs/-Ordner
+ENRICH_LOG = LOG_DIR / "enrich_repository_stats.log"
+logger = setup_logging(log_file=ENRICH_LOG)
 
 from tqdm import tqdm
 from github_collector.enrichment.graphql_handler import GraphQLHandler
@@ -34,8 +35,6 @@ try:
 except ImportError:
     logging.warning("python-dotenv nicht installiert, überspringe .env-Laden")
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
-logger = logging.getLogger(__name__)
 
 def get_repos_to_enrich(db_path, limit=None, force=False):
     """
@@ -70,7 +69,19 @@ def get_repos_to_enrich(db_path, limit=None, force=False):
     return [{"id": r[0], "owner": r[1], "name": r[2]} for r in rows]
 
 def main():
-    parser = argparse.ArgumentParser(description="Enrich repository stats using GitHub GraphQL API.")
+    """
+    Einstiegspunkt für das Enrichment der Repository-Statistiken.
+    
+    Parsed die Kommandozeilenargumente, lädt die zu verarbeitenden Repositories,
+    ruft den GraphQLHandler für die Anreicherung auf und aktualisiert die Datenbank.
+    Unterstützt Checkpointing (Fortsetzung ab Abbruch), Retry-Logik für fehlgeschlagene Repositories
+    und schreibt alle relevanten Informationen in das Logfile `logs/enrich_repository_stats.log`.
+    
+    Besonderheiten:
+    - contributors_count wird aktuell nicht gesammelt (Performance-Limit der API)
+    - commits_count bezieht sich auf den Default Branch
+    """
+    parser = argparse.ArgumentParser(description="Enrich repository stats via GitHub GraphQL API")
     parser.add_argument('--db-path', required=False, help='Path to SQLite DB (default: data/github_data.db)')
     parser.add_argument('--batch-size', type=int, default=50, help='Batch size for GraphQL queries (default: 50)')
     parser.add_argument('--limit', type=int, default=None, help='Max number of repos to process')

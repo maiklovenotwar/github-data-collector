@@ -7,92 +7,28 @@ Es verwendet die Implementierung aus dem cli-Modul, um die Repository-Sammlung d
 """
 import os
 import sys
-
-# Füge das src-Verzeichnis zum Python-Pfad hinzu
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 
 from github_collector.cli.collect_command import main
 
-# Konfiguriere Logging
-from github_collector.utils.logging_config import setup_logging
-
-logger = setup_logging(log_file="repository_collection.log")
-
-
-def setup_api_client():
-    """Richte den GitHub API-Client ein."""
-    # Lade Umgebungsvariablen aus .env-Datei, falls verfügbar
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-    except ImportError:
-        logger.warning("python-dotenv nicht installiert, überspringe .env-Laden")
-    
-    # Hole GitHub API-Token aus Umgebungsvariable
-    github_token = os.environ.get("GITHUB_API_TOKEN")
-    github_tokens = os.environ.get("GITHUB_API_TOKENS")
-    
-    if github_tokens:
-        # Mehrere Tokens verwenden
-        tokens = [token.strip() for token in github_tokens.split(",")]
-        logger.info(f"{len(tokens)} GitHub API-Tokens gefunden")
-    elif github_token:
-        # Einzelnes Token verwenden
-        tokens = [github_token]
-        logger.info("GitHub API-Token gefunden")
-    else:
-        # Kein Token gefunden
-        logger.warning("Kein GitHub API-Token in Umgebungsvariablen gefunden")
-        github_token = input("Bitte gib dein GitHub API-Token ein: ").strip()
-        if not github_token:
-            raise ValueError("GitHub API-Token ist erforderlich")
-        tokens = [github_token]
-    
-    # Cache-Verzeichnis
-    cache_dir = os.environ.get("CACHE_DIR", ".github_cache")
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    
-    # Erstelle und gib den API-Client zurück
-    return GitHubAPI(tokens, cache_dir=cache_dir)
-
-
-def parse_arguments():
-    """Parse Kommandozeilenargumente."""
-    parser = argparse.ArgumentParser(description="Sammle GitHub-Repositories")
-    
-    # Zeitbereichsoptionen
-    time_group = parser.add_argument_group("Zeitbereichsoptionen")
-    time_group.add_argument("--time-range", choices=["week", "month", "year", "custom"], 
-                           help="Vordefinierter Zeitbereich für die Repository-Sammlung")
-    time_group.add_argument("--start-date", help="Startdatum für benutzerdefinierten Zeitbereich (YYYY-MM-DD)")
-    time_group.add_argument("--end-date", help="Enddatum für benutzerdefinierten Zeitbereich (YYYY-MM-DD)")
-    
-    # Sammlungsoptionen
-    collection_group = parser.add_argument_group("Sammlungsoptionen")
-    collection_group.add_argument("--limit", type=int, help="Maximale Anzahl zu sammelnder Repositories")
-    collection_group.add_argument("--all", action="store_true", help="Alle verfügbaren Repositories sammeln")
-    collection_group.add_argument("--min-stars", type=int, default=100, 
-                                help="Minimale Anzahl von Stars für Repositories (Standard: 100)")
-    
-    # Datenbankoptionen
-    db_group = parser.add_argument_group("Datenbankoptionen")
-    db_group.add_argument("--db-path", help="Pfad zur SQLite-Datenbankdatei")
-    
-    # Andere Optionen
-    parser.add_argument("--non-interactive", action="store_true", 
-                       help="Im nicht-interaktiven Modus ausführen (erfordert Zeitbereichs- und Limit-Optionen)")
-    parser.add_argument("--stats", action="store_true", 
-                       help="Datenbankstatistiken anzeigen und beenden")
-    
-    return parser.parse_args()
+if __name__ == "__main__":
+    sys.exit(main())
 
 
 
 
 
 def interactive_mode(args, api_client, db):
-    """Führe im interaktiven Modus aus."""
+    """
+    Startet die Repository-Sammlung im interaktiven Modus.
+    
+    Fragt den Nutzer nach Zeitbereich und weiteren Parametern, zeigt Statistiken an
+    und startet die Sammlung der Repositories über den RepositoryCollector.
+    
+    :param args: Kommandozeilenargumente bzw. Namespace
+    :param api_client: Initialisierter GitHub API Client
+    :param db: Datenbank-Objekt
+    """
     # Zeige aktuelle Statistiken an
     show_database_stats(db)
     
@@ -278,7 +214,16 @@ def interactive_mode(args, api_client, db):
 
 
 def non_interactive_mode(args, api_client, db):
-    """Führe im nicht-interaktiven Modus aus."""
+    """
+    Führt die Repository-Sammlung im nicht-interaktiven (Batch-)Modus aus.
+    
+    Nutzt direkt die übergebenen Parameter und sammelt Repositories automatisiert.
+    Zeigt Fortschritt und schreibt Logs.
+    
+    :param args: Kommandozeilenargumente bzw. Namespace
+    :param api_client: Initialisierter GitHub API Client
+    :param db: Datenbank-Objekt
+    """
     # Prüfe, ob alle erforderlichen Argumente angegeben sind
     if not args.time_range and not (args.start_date and args.end_date):
         logger.error("Im nicht-interaktiven Modus muss entweder --time-range oder --start-date und --end-date angegeben werden")
@@ -330,7 +275,14 @@ def non_interactive_mode(args, api_client, db):
 
 
 def main():
-    """Hauptfunktion."""
+    """
+    Einstiegspunkt für die Repository-Sammlung.
+    
+    Parsed die Kommandozeilenargumente, initialisiert API-Client und Datenbank,
+    und startet je nach Modus (interaktiv/nicht-interaktiv) die Sammlung.
+    
+    Beendet das Skript mit entsprechendem Exit-Code.
+    """
     args = parse_arguments()
     
     # Datenbankpfad

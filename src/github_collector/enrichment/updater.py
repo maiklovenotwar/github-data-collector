@@ -13,10 +13,16 @@ logger.setLevel(logging.DEBUG)
 def map_and_update_stats(db_path: str, repo_stats: List[Dict[str, Any]], dry_run: bool = False) -> int:
     """
     Aktualisiert die Statistiken für Repositories in der SQLite-DB anhand der vom GraphQLHandler gelieferten Werte.
+
     :param db_path: Pfad zur SQLite-DB
     :param repo_stats: Liste von Dicts mit repo_id, calculated_pr_count, calculated_commit_count, calculated_contributor_count
-    :param dry_run: Wenn True, werden keine Änderungen in die DB geschrieben
+    :param dry_run: Wenn True, werden keine Änderungen in die DB geschrieben (nur Logging und Simulation)
     :return: Anzahl der erfolgreich aktualisierten Repositories
+
+    Besonderheiten:
+    - Unterstützt Dry-Run für sichere Simulationen
+    - Umfassende Fehlerbehandlung und Logging für Nachvollziehbarkeit
+    - Gibt die Anzahl der erfolgreich aktualisierten Repositories zurück
     """
     logger.info(f"Starte Repository-Update (dry_run={dry_run}) für {len(repo_stats)} Repositories...")
     updated = 0

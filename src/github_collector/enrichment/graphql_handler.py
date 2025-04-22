@@ -9,6 +9,14 @@ from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 
 class GraphQLHandler:
+    """
+    Handler für die Kommunikation mit der GitHub GraphQL API zur Anreicherung von Repository-Statistiken.
+
+    Initialisiert einen GraphQL-Client mit Token und Endpunkt, unterstützt Batching und Fehlerbehandlung.
+
+    :param github_token: GitHub API Token (optional, sonst via Umgebungsvariable)
+    :param batch_size: Anzahl der Repositories pro API-Batch
+    """
     def __init__(self, github_token: str = None, batch_size: int = 50):
         self.github_token = github_token or os.getenv("GITHUB_API_TOKEN")
         if not self.github_token:
@@ -27,10 +35,17 @@ class GraphQLHandler:
 
     def fetch_repo_stats(self, repos: List[Dict[str, str]]) -> (List[Dict[str, Any]], List[List[Dict[str, str]]]):
         """
-        Fragt für eine Liste von Repositories (owner/name) die gewünschten Statistiken ab.
-        Gibt eine Liste von Dicts mit repo_id, calculated_pr_count, calculated_commit_count, calculated_contributor_count zurück.
-        Gibt zusätzlich eine Liste der fehlgeschlagenen Batches zurück.
-        Implementiert Rate Limit Handling, Retry (3x), exponentielles Backoff und Checkpointing.
+        Fragt für eine Liste von Repositories (owner/name) die gewünschten Statistiken per GitHub GraphQL API ab.
+        
+        Führt die Abfrage in Batches durch, behandelt Rate-Limits, implementiert Retry-Logik (3 Versuche)
+        mit exponentiellem Backoff und speichert den Fortschritt in einer Checkpoint-Datei.
+        
+        :param repos: Liste von Dictionaries mit owner und name der Repositories
+        :return: Tuple (Liste mit Ergebnis-Dicts, Liste der fehlgeschlagenen Batches)
+        
+        Jedes Ergebnis-Dict enthält: repo_id, calculated_pr_count, calculated_commit_count, calculated_contributor_count
+        Bei Fehlern werden die betroffenen Batches gesammelt und zurückgegeben.
+        Fortschritt kann über die Checkpoint-Datei wieder aufgenommen werden.
         """
         import requests
         import json

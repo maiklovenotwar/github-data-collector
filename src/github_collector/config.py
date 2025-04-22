@@ -17,7 +17,7 @@ DATA_DIR.mkdir(exist_ok=True)
 LOG_DIR.mkdir(exist_ok=True)
 
 # Datenbankeinstellungen
-DEFAULT_DB_PATH = BASE_DIR / "github_data.db"  # Behalte ursprünglichen Pfad für Abwärtskompatibilität
+DEFAULT_DB_PATH = DATA_DIR / "github_data.db"
 DB_URL = f"sqlite:///{os.getenv('DB_PATH', DEFAULT_DB_PATH)}"
 
 # API-Einstellungen
