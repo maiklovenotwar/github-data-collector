@@ -55,9 +55,15 @@ def main():
         logger.warning("python-dotenv nicht installiert, überspringe .env-Laden")
     
     # Datenbankpfad
-    db_path = args.db_path or os.environ.get("DATABASE_URL", "github_data.db")
-    if not db_path.startswith("sqlite:///"):
-        db_path = f"sqlite:///{db_path}"
+    if args.db_path:
+        db_path = args.db_path
+        if not db_path.startswith("sqlite:///"):
+            db_path = f"sqlite:///{db_path}"
+    else:
+        # Erzwinge immer den absoluten Pfad zur Datenbank im data/-Verzeichnis relativ zum Projektverzeichnis
+        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        db_file_path = os.path.join(project_dir, "data", "github_data.db")
+        db_path = f"sqlite:///{db_file_path}"
     
     # Initialisiere Datenbank
     db = GitHubDatabase(db_path)

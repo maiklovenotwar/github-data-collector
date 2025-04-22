@@ -28,16 +28,10 @@ def reset_database():
     Returns:
         True bei Erfolg, False bei Fehler
     """
-    # Verwende die Standard-Datenbank aus der Umgebungsvariable oder den Standardwert
-    db_path = os.environ.get("DATABASE_URL", "github_data.db")
-    
-    # Stelle sicher, dass der Pfad im richtigen Format ist
-    if not db_path.startswith('sqlite:///'):
-        db_url = f'sqlite:///{db_path}'
-        db_file_path = db_path
-    else:
-        db_url = db_path
-        db_file_path = db_path.replace('sqlite:///', '')
+    # Erzwinge immer den absoluten Pfad zur Datenbank im data/-Verzeichnis relativ zum Projektverzeichnis
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    db_file_path = os.path.join(project_dir, "data", "github_data.db")
+    db_url = f"sqlite:///{db_file_path}"
     
     logger.info(f"Setze Datenbank zurück: {db_file_path}")
     
@@ -68,7 +62,9 @@ def run_collect_repositories():
     Returns:
         True, wenn das Skript erfolgreich ausgeführt wurde, sonst False
     """
-    collect_script = os.path.join(os.path.dirname(__file__), "collect_repositories.py")
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    collect_script = os.path.join(project_dir, "scripts", "collect_repositories.py")
+    db_file_path = os.path.join(project_dir, "data", "github_data.db")
     
     # Stelle sicher, dass das Skript existiert
     if not os.path.exists(collect_script):
@@ -76,7 +72,7 @@ def run_collect_repositories():
         return False
     
     # Führe das Skript aus
-    cmd = [sys.executable, collect_script]
+    cmd = [sys.executable, collect_script, '--db-path', db_file_path]
     logger.info(f"Führe aus: {' '.join(cmd)}")
     
     try:
