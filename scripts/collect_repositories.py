@@ -78,6 +78,8 @@ def parse_arguments():
     collection_group.add_argument("--all", action="store_true", help="Alle verfügbaren Repositories sammeln")
     collection_group.add_argument("--min-stars", type=int, default=100, 
                                 help="Minimale Anzahl von Stars für Repositories (Standard: 100)")
+    collection_group.add_argument("--star-range", nargs=2, type=int, metavar=("MIN", "MAX"),
+                                help="Sammle Repositories mit einer Anzahl an Stars im Bereich MIN bis MAX (inklusive). Ignoriert --min-stars, falls gesetzt.")
     
     # Datenbankoptionen
     db_group = parser.add_argument_group("Datenbankoptionen")
@@ -177,24 +179,33 @@ def interactive_mode(args, api_client, db):
             logger.error("Ungültige Anzahl")
             return
     
-    # Frage nach minimaler Anzahl von Stars
-    try:
-        default_stars = args.min_stars if args.min_stars else 10
-        print(f"\nMinimale Anzahl von Stars (Standard: {default_stars}):")
-        min_stars_str = input().strip()
-        if min_stars_str:
-            min_stars = int(min_stars_str)
-        else:
-            min_stars = default_stars
-    except ValueError:
-        logger.error("Ungültige Anzahl von Stars")
-        return
-            
+    # Frage nach Star-Range oder minimalen Stars
+    use_star_range = input("\nMöchtest du einen Star-Bereich verwenden? (j/n): ").strip().lower()
+    if use_star_range in ("j", "ja", "y", "yes"):
+        try:
+            min_stars = int(input("Minimale Anzahl von Stars (inklusive): ").strip())
+            max_stars = int(input("Maximale Anzahl von Stars (inklusive): ").strip())
+        except ValueError:
+            logger.error("Ungültige Eingabe für Star-Bereich.")
+            return
+        use_range = True
+    else:
+        try:
+            default_stars = args.min_stars if args.min_stars else 10
+            print(f"\nMinimale Anzahl von Stars (Standard: {default_stars}):")
+            min_stars_str = input().strip()
+            if min_stars_str:
+                min_stars = int(min_stars_str)
+            else:
+                min_stars = default_stars
+        except ValueError:
+            logger.error("Ungültige Anzahl von Stars")
+            return
+        use_range = False
+
     # Frage nach Anzahl der Perioden
     time_diff = end_date - start_date
     days_total = time_diff.days
-    
-    # Berechne eine sinnvolle Standardanzahl von Perioden basierend auf der Zeitspanne
     if days_total <= 7:
         default_periods = 1
     elif days_total <= 30:
@@ -204,15 +215,13 @@ def interactive_mode(args, api_client, db):
     elif days_total <= 365:
         default_periods = 12
     else:
-        default_periods = days_total // 30  # Etwa eine Periode pro Monat
-    
+        default_periods = days_total // 30
     periods_count = None
     while periods_count is None:
         try:
             print(f"\nIn wie viele Perioden soll der Zeitraum unterteilt werden?")
             print(f"(Zeitraum: {days_total} Tage, Vorschlag: {default_periods} Perioden)")
             periods_str = input("Anzahl der Perioden: ").strip()
-            
             if periods_str:
                 periods_count = int(periods_str)
                 if periods_count <= 0:
@@ -223,55 +232,51 @@ def interactive_mode(args, api_client, db):
                 print(f"Standard-Wert wird verwendet: {periods_count} Perioden")
         except ValueError:
             print("Bitte geben Sie eine gültige Zahl ein.")
-    
     # Bestätige die Sammlung
     print(f"\nSammle Repositories von {start_date.strftime('%Y-%m-%d')} bis {end_date.strftime('%Y-%m-%d')}")
-    print(f"Minimale Anzahl von Stars: {min_stars}")
+    if use_range:
+        print(f"Star-Bereich: {min_stars} bis {max_stars}")
+    else:
+        print(f"Minimale Anzahl von Stars: {min_stars}")
     print(f"Zeitraum wird in {periods_count} Perioden unterteilt")
     if limit:
         print(f"Maximale Anzahl zu sammelnder Repositories: {limit}")
     else:
         print("Keine Begrenzung der Anzahl zu sammelnder Repositories")
-    
     confirm = input("\nFortfahren? (j/n): ").strip().lower()
     if confirm != "j" and confirm != "ja":
         print("Sammlung abgebrochen")
         return
-    
-    # Berechne die Perioden manuell, um die vom Benutzer angegebene Anzahl zu verwenden
     period_size = days_total / periods_count
     periods = []
     current_start = start_date
-    
     for i in range(periods_count):
-        # Berechne das Ende dieser Periode
         if i == periods_count - 1:
-            # Letzte Periode endet genau am Ende des Zeitraums
             current_end = end_date
         else:
-            # Berechne das Ende basierend auf der Periodengröße
             current_end = current_start + timedelta(days=period_size)
-        
-        # Füge die Periode hinzu
         periods.append((current_start, current_end))
-        
-        # Nächste Periode
         current_start = current_end
-    
-    # Sammle Repositories
     try:
-        # Setze den Zustand zurück und setze die benutzerdefinierten Perioden
         collector.state.reset(start_date, end_date)
         collector.state.set_time_periods(periods)
-        
-        # Starte die Sammlung
-        collector.collect_repositories(
-            start_date=start_date,
-            end_date=end_date,
-            min_stars=min_stars,
-            max_repos=limit,
-            resume=True
-        )
+        if use_range:
+            collector.collect_repositories_by_star_range(
+                start_date=start_date,
+                end_date=end_date,
+                min_stars=min_stars,
+                max_stars=max_stars,
+                max_repos=limit,
+                resume=True
+            )
+        else:
+            collector.collect_repositories(
+                start_date=start_date,
+                end_date=end_date,
+                min_stars=min_stars,
+                max_repos=limit,
+                resume=True
+            )
     except KeyboardInterrupt:
         print("\nSammlung unterbrochen. Der Fortschritt wurde gespeichert und kann später fortgesetzt werden.")
     except Exception as e:
@@ -282,51 +287,60 @@ def interactive_mode(args, api_client, db):
 
 
 def non_interactive_mode(args, api_client, db):
-    """Führe im nicht-interaktiven Modus aus."""
-    # Prüfe, ob alle erforderlichen Argumente angegeben sind
-    if not args.time_range and not (args.start_date and args.end_date):
-        logger.error("Im nicht-interaktiven Modus muss entweder --time-range oder --start-date und --end-date angegeben werden")
-        return
-    
-    # Berechne Zeitbereich
-    now = datetime.now(tz.UTC)
-    
-    if args.time_range == "week":
-        # Letzte Woche
-        end_date = now
-        start_date = now - timedelta(days=7)
-    elif args.time_range == "month":
-        # Letzter Monat
-        end_date = now
-        start_date = now - timedelta(days=30)
-    elif args.time_range == "year":
-        # Letztes Jahr
-        end_date = now
-        start_date = now - timedelta(days=365)
-    elif args.time_range == "custom" or (args.start_date and args.end_date):
-        # Benutzerdefinierter Zeitbereich
-        try:
-            start_date = datetime.strptime(args.start_date, "%Y-%m-%d").replace(tzinfo=tz.UTC)
-            end_date = datetime.strptime(args.end_date, "%Y-%m-%d").replace(tzinfo=tz.UTC)
-        except ValueError as e:
-            logger.error(f"Ungültiges Datumsformat: {e}")
-            return
-    else:
-        logger.error(f"Ungültiger Zeitbereich: {args.time_range}")
-        return
-    
-    # Initialisiere Repository-Collector
+    """
+    Führe im nicht-interaktiven Modus aus.
+    Args:
+        args: Kommandozeilenargumente
+        api_client: GitHub API-Client
+        db: Datenbankverbindung
+    """
     collector = RepositoryCollector(github_client=api_client, db=db)
-    
-    # Sammle Repositories
+
+    # Zeitbereich bestimmen
+    if args.start_date and args.end_date:
+        start_date = datetime.strptime(args.start_date, "%Y-%m-%d").replace(tzinfo=tz.UTC)
+        end_date = datetime.strptime(args.end_date, "%Y-%m-%d").replace(tzinfo=tz.UTC)
+    else:
+        now = datetime.now(tz.UTC)
+        if args.time_range == "week":
+            end_date = now
+            start_date = now - timedelta(days=7)
+        elif args.time_range == "month":
+            end_date = now
+            start_date = now - timedelta(days=30)
+        elif args.time_range == "year":
+            end_date = now
+            start_date = now - timedelta(days=365)
+        else:
+            raise ValueError("Zeitbereich muss angegeben werden")
+
+    limit = args.limit if args.limit else None
+
+    # Star-Range-Modus: Wenn --star-range gesetzt ist, wird die neue Methode verwendet
     try:
-        collector.collect_repositories(
-            start_date=start_date,
-            end_date=end_date,
-            min_stars=args.min_stars,
-            max_repos=args.limit,
-            resume=True
-        )
+        if args.star_range:
+            min_stars, max_stars = args.star_range
+            collector.collect_repositories_by_star_range(
+                start_date=start_date,
+                end_date=end_date,
+                min_stars=min_stars,
+                max_stars=max_stars,
+                max_repos=limit,
+                resume=True
+            )
+        else:
+            min_stars = args.min_stars if args.min_stars else 0
+            collector.collect_repositories(
+                start_date=start_date,
+                end_date=end_date,
+                min_stars=min_stars,
+                max_repos=limit,
+                resume=True
+            )
+    except KeyboardInterrupt:
+        print("\nSammlung unterbrochen. Der Fortschritt wurde gespeichert und kann später fortgesetzt werden.")
+    except Exception as e:
+        logger.error(f"Fehler bei der Repository-Sammlung: {e}")
     except KeyboardInterrupt:
         print("\nSammlung unterbrochen. Der Fortschritt wurde gespeichert und kann später fortgesetzt werden.")
     except Exception as e:
@@ -362,6 +376,9 @@ def main():
         if args.non_interactive:
             non_interactive_mode(args, api_client, db)
         else:
+            # Im interaktiven Modus: Falls --star-range gesetzt ist, Hinweis anzeigen
+            if hasattr(args, 'star_range') and args.star_range:
+                print("Hinweis: Die Star-Range-Option (--star-range) ist nur im nicht-interaktiven Modus direkt verfügbar. Für interaktive Nutzung bitte den nicht-interaktiven Modus verwenden.")
             interactive_mode(args, api_client, db)
     finally:
         # Schließe Datenbankverbindung

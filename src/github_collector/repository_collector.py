@@ -288,7 +288,7 @@ class RepositoryCollector:
         return subperiods
     
     def _search_repositories_in_period(self, start_date: datetime, end_date: datetime, 
-                                      min_stars: int = 0, page: int = 1) -> dict:
+                                      min_stars: int = 0, page: int = 1, max_stars: int = None) -> dict:
         """
         Suche nach Repositories in einer bestimmten Zeitperiode.
         
@@ -296,13 +296,17 @@ class RepositoryCollector:
             start_date: Startdatum
             end_date: Enddatum
             min_stars: Minimale Anzahl von Stars
+            max_stars: Maximale Anzahl von Stars (optional)
             page: Seitennummer
             
         Returns:
             Suchergebnisse als Dictionary
         """
         # Erstelle die Suchanfrage
-        query = f"created:{start_date.isoformat()}..{end_date.isoformat()} stars:>={min_stars}"
+        if max_stars is not None:
+            query = f"created:{start_date.isoformat()}..{end_date.isoformat()} stars:{min_stars}..{max_stars}"
+        else:
+            query = f"created:{start_date.isoformat()}..{end_date.isoformat()} stars:>={min_stars}"
         
         # Führe die Suche durch
         try:
@@ -318,6 +322,159 @@ class RepositoryCollector:
         except GitHubAPIError as e:
             logger.error(f"Fehler bei der Repository-Suche: {e}")
             return {"items": [], "total_count": 0}
+
+    def collect_repositories_by_star_range(self, start_date: Optional[datetime] = None, 
+                                           end_date: Optional[datetime] = None, min_stars: int = 0, 
+                                           max_stars: int = 100, max_repos: Optional[int] = None, resume: bool = True) -> int:
+        """
+        Sammle Repositories in einem bestimmten Zeitraum und Star-Bereich.
+        
+        Args:
+            start_date: Startdatum (optional)
+            end_date: Enddatum (optional)
+            min_stars: Minimale Anzahl von Stars (inklusive)
+            max_stars: Maximale Anzahl von Stars (inklusive)
+            max_repos: Maximale Anzahl zu sammelnder Repositories (optional)
+            resume: Sammlung fortsetzen, falls unterbrochen
+        Returns:
+            Anzahl der gesammelten Repositories
+        """
+        from time import perf_counter
+        collection_start_time = perf_counter()
+        # Standardwerte für Zeitraum setzen
+        now = datetime.now(tz.UTC)
+        if end_date is None:
+            end_date = now
+        if start_date is None:
+            start_date = now - timedelta(days=30)
+        # Resume-Logik wie bei collect_repositories
+        if resume and self.state.state.get("time_periods"):
+            state_start_date = datetime.fromisoformat(self.state.get("start_date"))
+            state_end_date = datetime.fromisoformat(self.state.get("end_date"))
+            total_repos = self._get_total_repositories_in_timeframe(state_start_date, state_end_date, min_stars, max_stars)
+            if total_repos > 0:
+                print(f"\nInsgesamt gefundene Repositories im Zeitraum {state_start_date.strftime('%Y-%m-%d')} bis {state_end_date.strftime('%Y-%m-%d')} mit Stars {min_stars}..{max_stars}: {total_repos}")
+        else:
+            logger.info(f"Starte neue Sammlung von {start_date} bis {end_date} für Stars {min_stars}..{max_stars}")
+            total_repos = self._get_total_repositories_in_timeframe(start_date, end_date, min_stars, max_stars)
+            if total_repos > 0:
+                print(f"\nInsgesamt gefundene Repositories im Zeitraum {start_date.strftime('%Y-%m-%d')} bis {end_date.strftime('%Y-%m-%d')} mit Stars {min_stars}..{max_stars}: {total_repos}")
+            periods = self._calculate_time_periods(start_date, end_date)
+            self.state.reset(start_date, end_date)
+            self.state.set_time_periods(periods)
+        total_collected = 0
+        while True:
+            period = self.state.get_current_period()
+            if not period:
+                logger.info("Keine weiteren Zeitperioden verfügbar")
+                break
+            period_start, period_end = period
+            current_period_index = self.state.state.get("current_period_index", 0)
+            total_periods = len(self.state.state.get("time_periods", []))
+            show_period_progress(current_period_index, total_periods)
+            logger.info(f"Sammle Repositories in der Periode {period_start} bis {period_end} (Stars {min_stars}..{max_stars})")
+            period_collected = self._collect_repositories_in_period_by_star_range(
+                start_date=period_start,
+                end_date=period_end,
+                min_stars=min_stars,
+                max_stars=max_stars,
+                max_repos=max_repos
+            )
+            total_collected += period_collected
+            if max_repos and total_collected >= max_repos:
+                show_max_repos_reached(max_repos)
+                break
+            if not self.state.next_period():
+                logger.info("Alle Zeitperioden abgeschlossen")
+                break
+        show_collection_summary(total_collected)
+        collection_end_time = perf_counter()
+        collection_time = collection_end_time - collection_start_time
+        print(f"\n\u23F0 Gesamtzeit: {collection_time:.2f} Sekunden für {total_collected} Repositories")
+        if total_collected > 0:
+            print(f"   Durchschnitt gesamt: {collection_time / total_collected:.2f} Sekunden pro Repository")
+        print(f"   Reine Verarbeitungszeit: {self.__class__._total_processing_time:.2f} Sekunden")
+        print(f"   Overhead (API, Suche, etc.): {collection_time - self.__class__._total_processing_time:.2f} Sekunden")
+        return total_collected
+
+    def _collect_repositories_in_period_by_star_range(self, start_date: datetime, end_date: datetime, 
+                                                      min_stars: int = 0, max_stars: int = 100, max_repos: Optional[int] = None) -> int:
+        """
+        Sammle Repositories in einer bestimmten Zeitperiode und Star-Range.
+        Args:
+            start_date: Startdatum
+            end_date: Enddatum
+            min_stars: Minimale Anzahl von Stars
+            max_stars: Maximale Anzahl von Stars
+            max_repos: Maximale Anzahl zu sammelnder Repositories (optional)
+        Returns:
+            Anzahl der gesammelten Repositories
+        """
+        page = self.state.get("current_period_page", 1)
+        collected_count = 0
+        total_count = None
+        last_count = 0
+        while True:
+            results = self._search_repositories_in_period(start_date, end_date, min_stars=min_stars, max_stars=max_stars, page=page)
+            if total_count is None:
+                total_count = results.get("total_count", 0)
+            items = results.get("items", [])
+            if not items:
+                logger.info(f"Keine weiteren Repositories in dieser Periode (Seite {page})")
+                if collected_count < total_count and collected_count > 0:
+                    show_collection_progress(collected_count, total_count)
+                break
+            if items:
+                self._process_repositories_batch(items)
+                collected_count += len(items)
+                total_collected = self.state.get("repositories_collected", 0) + len(items)
+                self.state.update(
+                    repositories_collected=total_collected,
+                    current_period_page=page
+                )
+                if max_repos and total_collected >= max_repos:
+                    show_max_repos_reached(max_repos)
+                    return collected_count
+            if collected_count // 100 > last_count // 100 and total_count > 0:
+                last_count = collected_count
+                show_collection_progress(collected_count, total_count)
+            page += 1
+            self.state.update(current_period_page=page)
+            if len(items) < 100 or page > 10:
+                if collected_count > 0:
+                    if collected_count >= total_count:
+                        show_collection_complete(total_count)
+                    else:
+                        show_collection_progress(collected_count, total_count)
+                break
+        return collected_count
+
+    def _get_total_repositories_in_timeframe(self, start_date: datetime, end_date: datetime, 
+                                             min_stars: int = 0, max_stars: int = None) -> int:
+        """
+        Ermittle die Gesamtanzahl der Repositories im angegebenen Zeitraum und Star-Bereich.
+        Args:
+            start_date: Startdatum
+            end_date: Enddatum
+            min_stars: Minimale Anzahl von Stars
+            max_stars: Maximale Anzahl von Stars (optional)
+        Returns:
+            Gesamtanzahl der Repositories
+        """
+        try:
+            results = self._search_repositories_in_period(
+                start_date=start_date,
+                end_date=end_date,
+                min_stars=min_stars,
+                max_stars=max_stars,
+                page=1
+            )
+            if "total_count" in results:
+                return results["total_count"]
+            return 0
+        except Exception as e:
+            logger.error(f"Fehler bei der Ermittlung der Gesamtanzahl der Repositories: {e}")
+            return 0
     
     def _get_total_repositories_in_timeframe(self, start_date: datetime, end_date: datetime, 
                                           min_stars: int = 0) -> int:
