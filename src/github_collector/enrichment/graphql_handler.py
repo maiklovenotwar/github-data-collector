@@ -84,19 +84,46 @@ class GraphQLHandler:
                         time.sleep(wait_sec)
                         continue
                     resp.raise_for_status()
-                    response = resp.json()["data"]
-                    logger.debug(f"GraphQL-Rohantwort: {response}")
-                    for repo_key, repo_data in response.items():
-                        if repo_data and repo_data.get("id"):
-                            history = repo_data.get("defaultBranchRef", {}).get("target", {}).get("history", {})
-                            results.append({
-                                "repo_id": repo_data["id"],
-                                "database_id": repo_data.get("databaseId"),
-                                "calculated_pr_count": repo_data.get("pullRequests", {}).get("totalCount", 0),
-                                "calculated_commit_count": history.get("totalCount", 0),
-                                "calculated_contributor_count": 0,
-                            })
-                    logger.debug(f"Extrahierte results für Batch: {results}")
+                    # --- Robust: Prüfe, ob data-Teil vorhanden ist ---
+                    response_json = resp.json()
+                    response_data = response_json.get("data")
+                    if response_data is None:
+                        logger.error(f"GraphQL-Antwort ohne 'data'-Feld: {response_json}. Batch wird erneut versucht.")
+                        raise Exception("Keine 'data'-Sektion in der GraphQL-Antwort.")
+                    logger.debug(f"GraphQL-Rohantwort: {response_data}")
+                    current_batch_results = []
+                    failed_repos_in_batch = []
+                    for idx, repo in enumerate(batch):
+                        repo_key = f"repo{idx}"
+                        repo_data = response_data.get(repo_key)
+                        if not isinstance(repo_data, dict) or repo_data is None:
+                            failed_repos_in_batch.append(repo)
+                            logger.warning(f"Keine Daten für Repo {repo['owner']}/{repo['name']} gefunden (repo_data ist {type(repo_data)}: {repo_data})")
+                            continue
+                        if repo_data.get("databaseId") is None:
+                            failed_repos_in_batch.append(repo)
+                            logger.warning(f"Keine databaseId für Repo {repo['owner']}/{repo['name']} gefunden: {repo_data}")
+                            continue
+                        default_branch = repo_data.get("defaultBranchRef")
+                        if not isinstance(default_branch, dict):
+                            default_branch = {}
+                        target = default_branch.get("target")
+                        if not isinstance(target, dict):
+                            target = {}
+                        history = target.get("history", {})
+                        if not isinstance(history, dict):
+                            history = {}
+                        current_batch_results.append({
+                            "repo_id": repo_data["id"],
+                            "database_id": repo_data.get("databaseId"),
+                            "calculated_pr_count": repo_data.get("pullRequests", {}).get("totalCount", 0),
+                            "calculated_commit_count": history.get("totalCount", 0),
+                            "calculated_contributor_count": 0,
+                        })
+                    if failed_repos_in_batch:
+                        failed_batches.append(failed_repos_in_batch)
+                    results.extend(current_batch_results)
+                    logger.debug(f"Extrahierte results für Batch: {current_batch_results}")
                     success = True
                     break
                 except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
@@ -108,7 +135,8 @@ class GraphQLHandler:
                     last_exception = e
                     time.sleep(2 ** attempt)
                 except Exception as e:
-                    logger.error(f"Allgemeiner Fehler bei Batch {batch_idx+1} (Versuch {attempt+1}): {e}. Batch: {[r['owner'] + '/' + r['name'] for r in batch]}")
+                    batch_repr = [r.get('owner', 'N/A') + '/' + r.get('name', 'N/A') for r in batch if isinstance(r, dict)]
+                    logger.error(f"Allgemeiner Fehler bei Batch {batch_idx+1} (Versuch {attempt+1}): {e}. Batch: {batch_repr}", exc_info=True)
                     last_exception = e
                     time.sleep(2 ** attempt)
             # Checkpoint nach jedem Batch schreiben
