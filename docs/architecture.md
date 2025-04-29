@@ -18,14 +18,17 @@ Der GitHub Data Collector ist eine Python-Anwendung zur effizienten Sammlung von
 
 Die zentrale Konfigurationsdatei enthält alle Konfigurationsparameter für die Anwendung, einschließlich Pfaden, Datenbankeinstellungen, API-Konfiguration und Logging-Einstellungen.
 
-### 2. API-Client (`api/github_api.py`)
+### 2. API-Client & GraphQL-Handler (`api/github_api.py`, `enrichment/graphql_handler.py`)
 
-Der API-Client ist verantwortlich für die Kommunikation mit der GitHub API. Er implementiert:
+Der API-Client ist verantwortlich für die Kommunikation mit der GitHub REST API. Für die Anreicherung von Repository-Statistiken wird zusätzlich ein spezialisierter GraphQL-Handler eingesetzt (`enrichment/graphql_handler.py`).
 
 - Token-Pool-Management für mehrere API-Tokens
 - Rate-Limit-Handling
 - Caching von API-Antworten
 - Fehlerbehandlung
+- **GraphQL-Integration:** Für das Enrichment von Repositories wird die GitHub GraphQL API genutzt. Die Fehlerbehandlung ist besonders robust: Einzelne Fehler im Batch führen nicht mehr zum Abbruch der Verarbeitung, sondern werden individuell geloggt und können gezielt nachbearbeitet werden (z.B. mit `failed_repo_ids_*.txt`).
+- **Stacktrace-Logging:** Fehlerursachen werden mit Stacktrace erfasst, um die Nachvollziehbarkeit und gezielte Fehlerbehebung zu ermöglichen.
+- **Retry-Mechanismen:** Bei temporären API-Fehlern (z.B. 5xx) werden automatische Wiederholungsversuche durchgeführt.
 
 ### 3. Datenbank (`database/`)
 
@@ -129,6 +132,13 @@ Die Anwendung implementiert verschiedene Leistungsoptimierungen:
 4. **Performance-Tracking**: Ermöglicht die Identifizierung von Leistungsengpässen.
 
 ## Fehlerbehandlung
+
+Die Anwendung implementiert eine robuste Fehlerbehandlung:
+
+- Einzelne Fehler in der GraphQL-Anreicherung werden pro Repository geloggt, ohne dass der gesamte Batch fehlschlägt.
+- Fehlerhafte Repositories werden in `failed_repo_ids_*.txt` protokolliert und können gezielt erneut verarbeitet werden.
+- Stacktraces und detaillierte Fehlerursachen werden im Logfile dokumentiert.
+- Retry-Mechanismen sorgen für automatische Wiederholungsversuche bei temporären API-Fehlern.
 
 Die Anwendung implementiert eine robuste Fehlerbehandlung:
 

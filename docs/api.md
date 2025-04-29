@@ -1,8 +1,16 @@
-# GitHub API-Komponente des GitHub Data Collectors
+# GitHub API- und GraphQL-Komponente des GitHub Data Collectors
 
 ## Übersicht
 
-Die GitHub API-Komponente ist verantwortlich für die Kommunikation mit der GitHub REST API v3. Sie implementiert einen robusten Client mit Token-Pool-Management, Rate-Limit-Handling, Caching und Fehlerbehandlung.
+Die API-Komponenten sind verantwortlich für die Kommunikation mit der GitHub REST API v3 **und** der GitHub GraphQL API. Für das Enrichment der Repository-Statistiken wird die GraphQL API genutzt. Beide Komponenten bieten robustes Token-Handling, Caching und Fehlerbehandlung.
+
+## GraphQL-Integration und Fehlerbehandlung
+
+- Für die Anreicherung von Repository-Statistiken wird die GitHub GraphQL API verwendet (siehe `enrichment/graphql_handler.py`).
+- Fehler bei einzelnen Repositories führen nicht zum Abbruch des gesamten Batches, sondern werden individuell geloggt.
+- Stacktraces und detaillierte Fehlerursachen werden im Logfile dokumentiert.
+- Temporäre API-Fehler (z.B. 502 Bad Gateway) werden automatisch erneut versucht (Retry-Logik).
+- IDs von dauerhaft fehlgeschlagenen Repositories werden in `failed_repo_ids_*.txt` gespeichert und können gezielt nachbearbeitet werden.
 
 ## Hauptfunktionalitäten
 
