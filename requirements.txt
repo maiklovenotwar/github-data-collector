@@ -5,5 +5,7 @@ python-dateutil
 python-dotenv
 requests
 sqlalchemy
+pymysql
+cryptography
 gql[requests]
 tqdm

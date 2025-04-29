@@ -31,7 +31,10 @@ import sqlite3
 # .env laden (wie im Projekt üblich)
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    import os
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    dotenv_path = os.path.join(project_dir, ".env")
+    load_dotenv(dotenv_path, override=True)
 except ImportError:
     logging.warning("python-dotenv nicht installiert, überspringe .env-Laden")
 

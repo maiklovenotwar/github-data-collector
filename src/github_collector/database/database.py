@@ -51,20 +51,15 @@ class GitHubDatabase:
         Datenbankverbindung initialisieren.
         
         Args:
-            db_path: Pfad zur SQLite-Datenbank oder None für In-Memory-DB
+            db_path: Vollständige SQLAlchemy-URL (z.B. mysql+pymysql://...) oder None für In-Memory-DB
         """
         if db_path:
-            # SQLite-Datenbankpfad
-            if not db_path.startswith('sqlite:///'):
-                db_path = f'sqlite:///{db_path}'
+            self.db_url = db_path  # Keine Manipulation, akzeptiere jede SQLAlchemy-URL
         else:
-            # In-Memory-Datenbank für Tests
-            db_path = 'sqlite:///:memory:'
-            
-        self.db_url = db_path
-        self.Session = init_db(db_path)
+            self.db_url = 'sqlite:///:memory:'
+        self.Session = init_db(self.db_url)
         self.session = self.Session()
-        logger.info(f"Datenbankverbindung initialisiert: {db_path}")
+        logger.info(f"Datenbankverbindung initialisiert: {self.db_url}")
     
     def close(self):
         """Datenbankverbindung schließen."""

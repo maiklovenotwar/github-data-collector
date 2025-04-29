@@ -25,7 +25,10 @@ def setup_api_client():
     """Richte den GitHub API-Client ein."""
     try:
         from dotenv import load_dotenv
-        load_dotenv()
+        import os
+        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        dotenv_path = os.path.join(project_dir, ".env")
+        load_dotenv(dotenv_path, override=True)
     except ImportError:
         logger.warning("python-dotenv nicht installiert, überspringe .env-Laden")
     github_token = os.environ.get("GITHUB_API_TOKEN")
@@ -63,7 +66,7 @@ def parse_arguments():
     collection_group.add_argument("--star-range", nargs=2, type=int, metavar=("MIN", "MAX"),
                                 help="Sammle Repositories mit einer Anzahl an Stars im Bereich MIN bis MAX (inklusive). Ignoriert --min-stars, falls gesetzt.")
     db_group = parser.add_argument_group("Datenbankoptionen")
-    db_group.add_argument("--db-path", help="Pfad zur SQLite-Datenbankdatei")
+    db_group.add_argument("--db-path", help="Pfad zur Datenbankdatei oder vollständige SQLAlchemy-URL (z.B. mysql+pymysql://user:pw@host/db)")
     parser.add_argument("--non-interactive", action="store_true", 
                        help="Im nicht-interaktiven Modus ausführen (erfordert Zeitbereichs- und Limit-Optionen)")
     parser.add_argument("--stats", action="store_true", 
@@ -331,6 +334,8 @@ def non_interactive_mode(args, api_client, db):
 
 
 def main():
+    import os
+    print("DEBUG: DATABASE_URL =", os.environ.get("DATABASE_URL"))
     """
     Einstiegspunkt für die Repository-Sammlung.
     
@@ -340,21 +345,19 @@ def main():
     Beendet das Skript mit entsprechendem Exit-Code.
     """
     args = parse_arguments()
-    
-    # Datenbankpfad
+    db_path = None
+
+    # 1. Priorität: --db-path
     if args.db_path:
-        # Falls ein Pfad übergeben wurde, immer relativ zum Projektverzeichnis auflösen, falls kein absoluter Pfad
-        if not os.path.isabs(args.db_path):
-            project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            db_file_path = os.path.join(project_dir, args.db_path)
+        if '://' in args.db_path:
+            db_path = args.db_path
         else:
-            db_file_path = args.db_path
-        if not db_file_path.startswith("sqlite:///"):
-            db_path = f"sqlite:///{db_file_path}"
-        else:
-            db_path = db_file_path
+            db_path = f"sqlite:///{os.path.abspath(args.db_path)}"
+    # 2. Priorität: Umgebungsvariable DATABASE_URL
+    elif os.environ.get("DATABASE_URL"):
+        db_path = os.environ["DATABASE_URL"]
+    # 3. Fallback: SQLite im data/-Verzeichnis
     else:
-        # Standard: immer im data/-Verzeichnis im Projektverzeichnis
         project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         db_file_path = os.path.join(project_dir, "data", "github_data.db")
         db_path = f"sqlite:///{db_file_path}"

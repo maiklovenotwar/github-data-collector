@@ -10,6 +10,9 @@ import os
 import sys
 import subprocess
 from pathlib import Path
+from dotenv import load_dotenv
+from sqlalchemy.engine.url import make_url
+import sqlalchemy
 
 # Füge das src-Verzeichnis zum Python-Pfad hinzu
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
@@ -21,29 +24,49 @@ from github_collector.utils.logging_config import setup_logging
 from github_collector.config import RESET_LOG
 logger = setup_logging(log_file=RESET_LOG)
 
+# Lade Umgebungsvariablen aus .env (immer aus Projekt-Hauptverzeichnis)
+project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+dotenv_path = os.path.join(project_dir, ".env")
+load_dotenv(dotenv_path)
+
+
 def reset_database():
     """
-    Setzt die Datenbank zurück, indem die Datenbankdatei gelöscht und neu initialisiert wird.
-    
-    Returns:
-        True bei Erfolg, False bei Fehler
+    Setzt die Datenbank zurück, je nach Typ (SQLite, MySQL, ...).
     """
-    # Erzwinge immer den absoluten Pfad zur Datenbank im data/-Verzeichnis relativ zum Projektverzeichnis
-    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    db_file_path = os.path.join(project_dir, "data", "github_data.db")
-    db_url = f"sqlite:///{db_file_path}"
-    
-    logger.info(f"Setze Datenbank zurück: {db_file_path}")
-    
-    # Lösche die Datenbankdatei, falls sie existiert
-    db_file = Path(db_file_path)
-    if db_file.exists():
-        try:
-            db_file.unlink()
-            logger.info(f"Datenbank-Datei gelöscht: {db_file_path}")
-        except Exception as e:
-            logger.error(f"Fehler beim Löschen der Datenbank-Datei: {e}")
-            return False
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        db_file_path = os.path.join(project_dir, "data", "github_data.db")
+        db_url = f"sqlite:///{db_file_path}"
+
+    url = make_url(db_url)
+
+    if url.drivername.startswith("sqlite"):
+        db_file_path = url.database
+        if os.path.exists(db_file_path):
+            os.remove(db_file_path)
+        init_db(db_url)
+        logger.info("SQLite-Datenbank zurückgesetzt.")
+        return True
+
+    elif url.drivername.startswith("mysql"):
+        tmp_url = url.set(database=None)
+        engine = sqlalchemy.create_engine(tmp_url)
+        db_name = url.database
+        with engine.connect() as conn:
+            conn.execute(f"DROP DATABASE IF EXISTS `{db_name}`")
+            conn.execute(f"CREATE DATABASE `{db_name}` DEFAULT CHARACTER SET utf8mb4")
+        engine = sqlalchemy.create_engine(db_url)
+        init_db(db_url)
+        logger.info("MySQL-Datenbank zurückgesetzt.")
+        return True
+
+    else:
+        logger.error(f"Reset für Datenbanktyp {url.drivername} nicht implementiert.")
+        return False
+
+
     
     # Initialisiere die Datenbank neu
     try:
@@ -64,7 +87,7 @@ def run_collect_repositories():
     """
     project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     collect_script = os.path.join(project_dir, "scripts", "collect_repositories.py")
-    db_file_path = os.path.join(project_dir, "data", "github_data.db")
+    db_url = os.environ.get("DATABASE_URL")
     
     # Stelle sicher, dass das Skript existiert
     if not os.path.exists(collect_script):
@@ -72,11 +95,16 @@ def run_collect_repositories():
         return False
     
     # Führe das Skript aus
-    cmd = [sys.executable, collect_script, '--db-path', db_file_path]
+    cmd = [sys.executable, collect_script]
+    # Nur wenn KEINE DATABASE_URL gesetzt ist, --db-path übergeben!
+    if not db_url:
+        db_file_path = os.path.join(project_dir, "data", "github_data.db")
+        cmd += ["--db-path", db_file_path]
     logger.info(f"Führe aus: {' '.join(cmd)}")
     
     try:
-        process = subprocess.run(cmd, check=True)
+        env = os.environ.copy()
+        process = subprocess.run(cmd, check=True, env=env)
         logger.info("Repository-Sammlung erfolgreich abgeschlossen")
         return True
     except subprocess.CalledProcessError as e:
