@@ -351,12 +351,22 @@ class RepositoryCollector:
         if resume and self.state.state.get("time_periods"):
             state_start_date = datetime.fromisoformat(self.state.get("start_date"))
             state_end_date = datetime.fromisoformat(self.state.get("end_date"))
-            total_repos = self._get_total_repositories_in_timeframe(state_start_date, state_end_date, min_stars, max_stars)
+            total_repos = self._get_total_repositories_in_timeframe(
+                start_date=state_start_date,
+                end_date=state_end_date,
+                min_stars=min_stars,
+                max_stars=max_stars
+            )
             if total_repos > 0:
                 print(f"\nInsgesamt gefundene Repositories im Zeitraum {state_start_date.strftime('%Y-%m-%d')} bis {state_end_date.strftime('%Y-%m-%d')} mit Stars {min_stars}..{max_stars}: {total_repos}")
         else:
             logger.info(f"Starte neue Sammlung von {start_date} bis {end_date} für Stars {min_stars}..{max_stars}")
-            total_repos = self._get_total_repositories_in_timeframe(start_date, end_date, min_stars, max_stars)
+            total_repos = self._get_total_repositories_in_timeframe(
+                start_date=start_date,
+                end_date=end_date,
+                min_stars=min_stars,
+                max_stars=max_stars
+            )
             if total_repos > 0:
                 print(f"\nInsgesamt gefundene Repositories im Zeitraum {start_date.strftime('%Y-%m-%d')} bis {end_date.strftime('%Y-%m-%d')} mit Stars {min_stars}..{max_stars}: {total_repos}")
             periods = self._calculate_time_periods(start_date, end_date)
@@ -471,37 +481,6 @@ class RepositoryCollector:
             )
             if "total_count" in results:
                 return results["total_count"]
-            return 0
-        except Exception as e:
-            logger.error(f"Fehler bei der Ermittlung der Gesamtanzahl der Repositories: {e}")
-            return 0
-    
-    def _get_total_repositories_in_timeframe(self, start_date: datetime, end_date: datetime, 
-                                          min_stars: int = 0) -> int:
-        """
-        Ermittle die Gesamtanzahl der Repositories im angegebenen Zeitraum.
-        
-        Args:
-            start_date: Startdatum
-            end_date: Enddatum
-            min_stars: Minimale Anzahl von Stars
-            
-        Returns:
-            Gesamtanzahl der Repositories
-        """
-        try:
-            # Führe die Suche durch (nur erste Seite, um die Gesamtanzahl zu ermitteln)
-            results = self._search_repositories_in_period(
-                start_date=start_date,
-                end_date=end_date,
-                min_stars=min_stars,
-                page=1
-            )
-            
-            # Extrahiere die Gesamtanzahl
-            if "total_count" in results:
-                return results["total_count"]
-            
             return 0
         except Exception as e:
             logger.error(f"Fehler bei der Ermittlung der Gesamtanzahl der Repositories: {e}")

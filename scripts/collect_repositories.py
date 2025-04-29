@@ -2,31 +2,24 @@
 """
 Skript zum Sammeln von GitHub-Repositories.
 
-Dieses Skript ist ein Wrapper für die CLI-Funktionalität des GitHub Data Collectors.
-Es verwendet die Implementierung aus dem cli-Modul, um die Repository-Sammlung durchzuführen.
+Dieses Skript bietet einen interaktiven und nicht-interaktiven Modus zur Sammlung von GitHub-Repositories mit Unterstützung für Star-Range-Filter, Zeitbereiche und weitere Optionen.
 """
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
-
-from github_collector.cli.collect_command import main
-
-# Konfiguriere Logging
 import os
 import sys
 import argparse
 from datetime import datetime, timedelta
 from dateutil import tz
 
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
-
+# Immer das src-Verzeichnis in den Modulpfad aufnehmen
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 from github_collector.api.github_api import GitHubAPI
 from github_collector.database.database import GitHubDatabase
 from github_collector.repository_collector import RepositoryCollector
 from github_collector.ui.stats import show_database_stats
 from github_collector.utils.logging_config import setup_logging
 
-logger = setup_logging(log_file="repository_collection.log")
+from github_collector import config
+logger = setup_logging(log_file=config.REPOSITORY_LOG)
 
 def setup_api_client():
     """Richte den GitHub API-Client ein."""
@@ -76,10 +69,6 @@ def parse_arguments():
     parser.add_argument("--stats", action="store_true", 
                        help="Datenbankstatistiken anzeigen und beenden")
     return parser.parse_args()
-
-
-
-
 
 def interactive_mode(args, api_client, db):
     """
@@ -281,57 +270,13 @@ def interactive_mode(args, api_client, db):
 
 def non_interactive_mode(args, api_client, db):
     """
-<<<<<<< HEAD
     Führt die Repository-Sammlung im nicht-interaktiven (Batch-)Modus aus.
-    
     Nutzt direkt die übergebenen Parameter und sammelt Repositories automatisiert.
     Zeigt Fortschritt und schreibt Logs.
-    
     :param args: Kommandozeilenargumente bzw. Namespace
     :param api_client: Initialisierter GitHub API Client
     :param db: Datenbank-Objekt
     """
-    # Prüfe, ob alle erforderlichen Argumente angegeben sind
-    if not args.time_range and not (args.start_date and args.end_date):
-        logger.error("Im nicht-interaktiven Modus muss entweder --time-range oder --start-date und --end-date angegeben werden")
-        return
-    
-    # Berechne Zeitbereich
-    now = datetime.now(tz.UTC)
-    
-    if args.time_range == "week":
-        # Letzte Woche
-        end_date = now
-        start_date = now - timedelta(days=7)
-    elif args.time_range == "month":
-        # Letzter Monat
-        end_date = now
-        start_date = now - timedelta(days=30)
-    elif args.time_range == "year":
-        # Letztes Jahr
-        end_date = now
-        start_date = now - timedelta(days=365)
-    elif args.time_range == "custom" or (args.start_date and args.end_date):
-        # Benutzerdefinierter Zeitbereich
-        try:
-            start_date = datetime.strptime(args.start_date, "%Y-%m-%d").replace(tzinfo=tz.UTC)
-            end_date = datetime.strptime(args.end_date, "%Y-%m-%d").replace(tzinfo=tz.UTC)
-        except ValueError as e:
-            logger.error(f"Ungültiges Datumsformat: {e}")
-            return
-    else:
-        logger.error(f"Ungültiger Zeitbereich: {args.time_range}")
-        return
-    
-    # Initialisiere Repository-Collector
-=======
-    Führe im nicht-interaktiven Modus aus.
-    Args:
-        args: Kommandozeilenargumente
-        api_client: GitHub API-Client
-        db: Datenbankverbindung
-    """
->>>>>>> feature/star-range-collection
     collector = RepositoryCollector(github_client=api_client, db=db)
 
     # Zeitbereich bestimmen
@@ -398,11 +343,18 @@ def main():
     
     # Datenbankpfad
     if args.db_path:
-        db_path = args.db_path
-        if not db_path.startswith("sqlite:///"):
-            db_path = f"sqlite:///{db_path}"
+        # Falls ein Pfad übergeben wurde, immer relativ zum Projektverzeichnis auflösen, falls kein absoluter Pfad
+        if not os.path.isabs(args.db_path):
+            project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            db_file_path = os.path.join(project_dir, args.db_path)
+        else:
+            db_file_path = args.db_path
+        if not db_file_path.startswith("sqlite:///"):
+            db_path = f"sqlite:///{db_file_path}"
+        else:
+            db_path = db_file_path
     else:
-        # Erzwinge immer den absoluten Pfad zur Datenbank im data/-Verzeichnis relativ zum Projektverzeichnis
+        # Standard: immer im data/-Verzeichnis im Projektverzeichnis
         project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         db_file_path = os.path.join(project_dir, "data", "github_data.db")
         db_path = f"sqlite:///{db_file_path}"

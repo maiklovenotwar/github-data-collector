@@ -192,7 +192,7 @@ def main():
                     failed_ids.add(str(r["id"]))
                 elif "repo_id" in r:
                     failed_ids.add(str(r["repo_id"]))
-        with open(fail_path, 'w') as f:
+        with open(fail_path, 'a') as f:
             for rid in sorted(failed_ids):
                 f.write(rid + '\n')
         logger.info(f"Fehlgeschlagene Repo-IDs in {fail_path} gespeichert ({len(failed_ids)} IDs).")
