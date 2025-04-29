@@ -13,6 +13,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy.engine.url import make_url
 import sqlalchemy
+from sqlalchemy import text
 
 # Füge das src-Verzeichnis zum Python-Pfad hinzu
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
@@ -55,8 +56,8 @@ def reset_database():
         engine = sqlalchemy.create_engine(tmp_url)
         db_name = url.database
         with engine.connect() as conn:
-            conn.execute(f"DROP DATABASE IF EXISTS `{db_name}`")
-            conn.execute(f"CREATE DATABASE `{db_name}` DEFAULT CHARACTER SET utf8mb4")
+            conn.execute(text(f"DROP DATABASE IF EXISTS `{db_name}`"))
+            conn.execute(text(f"CREATE DATABASE `{db_name}` DEFAULT CHARACTER SET utf8mb4"))
         engine = sqlalchemy.create_engine(db_url)
         init_db(db_url)
         logger.info("MySQL-Datenbank zurückgesetzt.")

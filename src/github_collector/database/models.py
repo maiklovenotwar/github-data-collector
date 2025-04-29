@@ -20,18 +20,18 @@ class Contributor(Base):
     __tablename__ = 'contributors'
     
     id = Column(Integer, primary_key=True)
-    login = Column(String, nullable=False, unique=True)
-    name = Column(String)
-    email = Column(String)
-    type = Column(String)
-    avatar_url = Column(String)
-    company = Column(String)
-    blog = Column(String)
-    location = Column(String)
+    login = Column(String(255), nullable=False, unique=True)
+    name = Column(String(255))
+    email = Column(String(255))
+    type = Column(String(50))
+    avatar_url = Column(String(255))
+    company = Column(String(255))
+    blog = Column(String(255))
+    location = Column(String(255))
     country_code = Column(String(2))  # ISO-Ländercode
-    region = Column(String)  # Region innerhalb des Landes oder Kontinents
+    region = Column(String(100))  # Region innerhalb des Landes oder Kontinents
     bio = Column(Text)
-    twitter_username = Column(String)
+    twitter_username = Column(String(50))
     public_repos = Column(Integer)
     public_gists = Column(Integer)
     followers = Column(Integer)
@@ -47,18 +47,18 @@ class Organization(Base):
     __tablename__ = 'organizations'
     
     id = Column(Integer, primary_key=True)
-    login = Column(String, nullable=False, unique=True)
-    name = Column(String)
-    email = Column(String)
-    type = Column(String)
-    avatar_url = Column(String)
-    company = Column(String)
-    blog = Column(String)
-    location = Column(String)
+    login = Column(String(255), nullable=False, unique=True)
+    name = Column(String(255))
+    email = Column(String(255))
+    type = Column(String(50))
+    avatar_url = Column(String(255))
+    company = Column(String(255))
+    blog = Column(String(255))
+    location = Column(String(255))
     country_code = Column(String(2))  # ISO-Ländercode
-    region = Column(String)  # Region innerhalb des Landes oder Kontinents
+    region = Column(String(100))  # Region innerhalb des Landes oder Kontinents
     bio = Column(Text)
-    twitter_username = Column(String)
+    twitter_username = Column(String(50))
     public_repos = Column(Integer)
     public_gists = Column(Integer)
     followers = Column(Integer)
@@ -75,18 +75,18 @@ class Repository(Base):
     __tablename__ = 'repositories'
     
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
-    full_name = Column(String, nullable=False, unique=True)
+    name = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=False, unique=True)
     owner_id = Column(Integer, ForeignKey('contributors.id'), nullable=False)
     organization_id = Column(Integer, ForeignKey('organizations.id'))
     
     # Metadaten
     description = Column(Text)
-    homepage = Column(String)
-    language = Column(String)
+    homepage = Column(String(255))
+    language = Column(String(100))
     private = Column(Boolean, default=False)
     fork = Column(Boolean, default=False)
-    default_branch = Column(String)
+    default_branch = Column(String(100))
     size = Column(Integer)
     
     # GitHub API-Statistiken
