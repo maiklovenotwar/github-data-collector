@@ -3,14 +3,14 @@ Updater-Modul für das Aktualisieren der Repository-Statistiken in der SQLite-DB
 unterstützt Dry-Run, Logging und Transaktionssicherheit.
 """
 import logging
-import sqlite3
+from sqlalchemy import create_engine, text
 from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def map_and_update_stats(db_path: str, repo_stats: List[Dict[str, Any]], dry_run: bool = False) -> int:
+def map_and_update_stats(db_url: str, repo_stats: List[Dict[str, Any]], dry_run: bool = False) -> int:
     """
     Aktualisiert die Statistiken für Repositories in der SQLite-DB anhand der vom GraphQLHandler gelieferten Werte.
 
@@ -38,54 +38,55 @@ def map_and_update_stats(db_path: str, repo_stats: List[Dict[str, Any]], dry_run
         logger.debug(f"Erstes Element in repo_stats: {repo_stats[0]}")
 
     try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        
-        # Debug: Zeige alle IDs in der DB (nur beim ersten Durchlauf, für Übersicht)
-        cursor.execute("SELECT id FROM repositories LIMIT 10")
-        ids_in_db = [row[0] for row in cursor.fetchall()]
-        logger.debug(f"Beispiel-IDs in DB (erste 10): {ids_in_db} (Typen: {[type(x) for x in ids_in_db]})")
+        engine = create_engine(db_url)
+        with engine.connect() as conn:
+            # Debug: Zeige alle IDs in der DB (nur beim ersten Durchlauf, für Übersicht)
+            result = conn.execute(text("SELECT id FROM repositories LIMIT 10"))
+            ids_in_db = [row[0] for row in result.fetchall()]
+            logger.debug(f"Beispiel-IDs in DB (erste 10): {ids_in_db} (Typen: {[type(x) for x in ids_in_db]})")
 
-        if not dry_run:
-            conn.execute('BEGIN TRANSACTION;')
+            # Mapping: databaseId -> Werte
+            update_tuples = []
+            for stat in repo_stats:
+                # Flexible ID-Erkennung: Unterstützt verschiedene mögliche Schlüsselnamen für die Repo-ID
+                id_keys = ["databaseId", "database_id", "repo_id", "id"]
+                database_id_value = None
+                for key in id_keys:
+                    if key in stat and stat[key] is not None:
+                        database_id_value = stat[key]
+                        logger.debug(f"ID-Schlüssel gefunden: '{key}' mit Wert {database_id_value}")
+                if database_id_value is None:
+                    logger.warning(f"Kein gültiger Repo-ID-Schlüssel in Stat: {stat}")
+                    continue
+                update_tuple = {
+                    "contributors_count": stat.get("calculated_contributor_count"),
+                    "commits_count": stat.get("calculated_commit_count"),
+                    "pull_requests_count": stat.get("calculated_pr_count"),
+                    "id": database_id_value
+                }
+                update_tuples.append(update_tuple)
 
-        # Mapping: databaseId -> Werte
-        update_tuples = []
-        for stat in repo_stats:
-            # Flexible ID-Erkennung: Unterstützt verschiedene mögliche Schlüsselnamen für die Repo-ID
-            id_keys = ["databaseId", "database_id", "repo_id", "id"]
-            database_id_value = None
-            for key in id_keys:
-                if key in stat and stat[key] is not None:
-                    database_id_value = stat[key]
-                    logger.debug(f"ID-Schlüssel gefunden: '{key}' mit Wert {database_id_value}")
-                    break
-
-            # Debug: Zeige den extrahierten Wert und seinen Typ
-            logger.debug(f"Prüfe Repo: Extrahierter ID-Wert={database_id_value} (Typ: {type(database_id_value)})")
-
-            # Logge explizit die Typen und Werte, die verglichen werden
-            logger.debug(f"Vergleiche extrahierte Repo-ID={database_id_value} (Typ: {type(database_id_value)}) gegen IDs in DB (erste 10): {ids_in_db}")
-
-            pr_count = stat.get("calculated_pr_count", 0)
-            commit_count = stat.get("calculated_commit_count", 0)
-            contributor_count = stat.get("calculated_contributor_count", 0)
-
-            if database_id_value is None:
-                logger.error(f"Konnte keine ID ('databaseId' oder 'database_id') im stat-Objekt finden: {stat}")
-                not_found.append(str(stat)) # Logge das ganze Objekt, um zu sehen was fehlt
-                continue
-
-            try:
-                # **Hypothese 2: Typ-Problem?** Konvertiere sicher zu int
-                db_id_int = int(database_id_value)
-                logger.debug(f"Konvertierte ID für DB-Check: db_id_int={db_id_int} (Typ: {type(db_id_int)})")
-            except (ValueError, TypeError) as e:
-                logger.error(f"Kann ID-Wert nicht zu int casten: {database_id_value} (Original-Typ: {type(database_id_value)}). Fehler: {e}")
-                not_found.append(str(database_id_value))
-                continue
-
-            # Prüfe, ob das Repo existiert
+            # Bulk-Update
+            updated = 0
+            if update_tuples:
+                if not dry_run:
+                    with conn.begin():
+                        for ut in update_tuples:
+                            conn.execute(
+                                text("""
+                                    UPDATE repositories
+                                    SET contributors_count = :contributors_count,
+                                        commits_count = :commits_count,
+                                        pull_requests_count = :pull_requests_count
+                                    WHERE id = :id
+                                """),
+                                ut
+                            )
+                            updated += 1
+                    logger.info(f"{len(update_tuples)} Repositories erfolgreich aktualisiert.")
+                else:
+                    logger.info(f"DRY-RUN: {len(update_tuples)} Repositories würden aktualisiert werden.")
+                    updated = len(update_tuples)
             cursor.execute("SELECT id FROM repositories WHERE id = ?", (db_id_int,))
             result = cursor.fetchone()
             if result:
