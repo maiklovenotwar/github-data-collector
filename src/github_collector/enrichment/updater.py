@@ -59,12 +59,25 @@ def map_and_update_stats(db_url: str, repo_stats: List[Dict[str, Any]], dry_run:
                 if database_id_value is None:
                     logger.warning(f"Kein gültiger Repo-ID-Schlüssel in Stat: {stat}")
                     continue
-                # NUR numerische IDs akzeptieren!
-                if not isinstance(database_id_value, int):
+                # Logging vor Typkonvertierung
+                logger.debug(f"Vor int()-Cast: {database_id_value} (Typ: {type(database_id_value)})")
+                # Akzeptiere numerische Strings und Integers
+                if isinstance(database_id_value, int):
+                    pass  # alles ok
+                elif isinstance(database_id_value, str):
+                    # Akzeptiere auch Strings, die wie eine Zahl aussehen (z.B. "12345")
+                    try:
+                        database_id_value_int = int(database_id_value)
+                        logger.debug(f"String-ID erfolgreich zu int gecastet: {database_id_value_int}")
+                        database_id_value = database_id_value_int
+                    except Exception:
+                        logger.warning(f"Repo-Stat mit nicht-numerischer ID (String) übersprungen: {database_id_value} | Stat: {stat}")
+                        continue
+                else:
                     try:
                         database_id_value = int(database_id_value)
                     except Exception:
-                        logger.warning(f"Repo-Stat mit nicht-numerischer ID übersprungen: {stat}")
+                        logger.warning(f"Repo-Stat mit nicht-numerischer ID (Typ {type(database_id_value)}) übersprungen: {database_id_value} | Stat: {stat}")
                         continue
                 update_tuple = {
                     "contributors_count": stat.get("calculated_contributor_count"),
