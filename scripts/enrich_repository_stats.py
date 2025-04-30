@@ -117,11 +117,11 @@ def main():
         with open(retry_path, 'r') as f:
             retry_ids = set(line.strip() for line in f if line.strip())
         # Hole alle Repos aus DB, filtere auf die IDs
-        all_repos = get_repos_to_enrich(db_path, limit=None, force=True)
+        all_repos = get_repos_to_enrich(db_url, limit=None, force=True)
         repos = [r for r in all_repos if str(r['id']) in retry_ids]
         logger.info(f"{len(repos)} Repositories aus Retry-Datei für Enrichment ausgewählt.")
     else:
-        repos = get_repos_to_enrich(db_path, limit=args.limit, force=args.force)
+        repos = get_repos_to_enrich(db_url, limit=args.limit, force=args.force)
         logger.info(f"{len(repos)} Repositories für Enrichment ausgewählt.")
     if not repos:
         logger.info("Keine Repositories zum Anreichern gefunden. Beende.")
