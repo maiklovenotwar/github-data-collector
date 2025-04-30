@@ -95,16 +95,6 @@ def map_and_update_stats(db_url: str, repo_stats: List[Dict[str, Any]], dry_run:
                     logger.info(f"DRY-RUN: {len(update_tuples)} Repositories würden aktualisiert werden.")
                     updated = len(update_tuples)
 
-        if not dry_run and update_tuples:
-            logger.info(f"Führe 'executemany' für {len(update_tuples)} Updates aus...")
-            cursor.executemany(
-                "UPDATE repositories SET pull_requests_count=?, commits_count=?, contributors_count=? WHERE id=?",
-                update_tuples
-            )
-            conn.commit()
-            logger.info(f"{len(update_tuples)} Repositories erfolgreich aktualisiert.") # Korrigiert auf tatsächliche Anzahl
-        elif not dry_run and not update_tuples:
-            logger.info("Keine Updates notwendig oder möglich für diesen Batch.")
             
         if dry_run:
             # Die Zählung 'updated' zählt, wie viele gefunden wurden, nicht wie viele wirklich geändert würden.
