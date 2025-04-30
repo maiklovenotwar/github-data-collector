@@ -8,7 +8,8 @@ Das Skript `update_location_geocoding.py` reichert die Standortangaben (z.B. "Be
 ## Voraussetzungen
 - Python 3.11 oder 3.12 (NICHT 3.13, siehe Kompatibilitätshinweise)
 - Installation aller Pakete aus `requirements.txt`
-- SQLite-Datenbank mit gesammelten Contributor- und Organisationsdaten
+- SQLite- oder MySQL-Datenbank mit gesammelten Contributor- und Organisationsdaten
+- Die Datenbank wird über die Umgebungsvariable `DATABASE_URL` (z.B. `sqlite:///data/github_data.db` oder `mysql+pymysql://user:pass@localhost/github_data`) oder per `--db-path` angegeben.
 
 ## Kommandozeilenargumente
 - `--db-path`: Pfad zur SQLite-Datenbank
@@ -20,7 +21,12 @@ Das Skript `update_location_geocoding.py` reichert die Standortangaben (z.B. "Be
 
 ## Beispielaufruf
 ```bash
+# Mit SQLite (Standard):
 python scripts/update_location_geocoding.py --db-path data/github_data.db --contributors --limit 100
+
+# Mit MySQL (über Umgebungsvariable):
+export DATABASE_URL="mysql+pymysql://user:pass@localhost/github_data"
+python scripts/update_location_geocoding.py --contributors --limit 100
 ```
 
 ## Hinweise

@@ -7,7 +7,8 @@ Diese Anleitung beschreibt die Verwendung des GitHub Data Collectors zur Sammlun
 - Python 3.11 oder 3.12 (NICHT 3.13, siehe Kompatibilitätshinweise in requirements.txt)
 - Installation aller Pakete aus `requirements.txt`
 - GitHub Personal Access Token (PAT) als Umgebungsvariable `GITHUB_API_TOKEN` setzen
-- SQLite-Datenbank (wird automatisch angelegt, falls nicht vorhanden)
+- SQLite- oder MySQL-Datenbank (wird automatisch angelegt, falls nicht vorhanden)
+- Die Datenbank wird über die Umgebungsvariable `DATABASE_URL` (z.B. `sqlite:///data/github_data.db` oder `mysql+pymysql://user:pass@localhost/github_data`) oder per `--db-path` angegeben. Der Wert für `--db-path` wird automatisch zu einer SQLAlchemy-URL umgewandelt, falls nötig.
 
 ## Grundlegende Verwendung
 

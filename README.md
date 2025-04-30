@@ -10,12 +10,13 @@ Dieses Projekt konzentriert sich ausschließlich auf die effiziente Sammlung von
 2. **Erfassung von Contributor-Informationen** einschließlich Standortdaten
 3. **Sammlung von Organisationsdaten** mit Metadaten und Standortinformationen
 4. **Geokodierung von Standortdaten** zur Anreicherung mit Länder- und Regionsinformationen
-5. **Speicherung aller Daten in einer SQLite-Datenbank** für externe Analysezwecke
+5. **Speicherung aller Daten in einer SQLite- oder MySQL-Datenbank** für externe Analysezwecke
 
 ## 🌟 Hauptfunktionen
 
 - **Effiziente GitHub API-Integration**: Optimiert für die Sammlung detaillierter Repository-, Contributor- und Organisationsmetadaten
 - **Geografische Anreicherung**: Extrahiert und geokodiert Standortdaten von Mitwirkenden und Organisationen
+- **Unterstützung für MySQL und SQLite**: Die Datenbank kann über die Umgebungsvariable `DATABASE_URL` als SQLite- oder MySQL-URL angegeben werden (siehe unten).
 - **Effiziente Sammlungsstrategien**:
   - Sternbasierte Sammlung für beliebte Repositories
   - Zeitraumbasierte Sammlung für historische Daten mit optimierter Periodengröße
@@ -31,7 +32,13 @@ Dieses Projekt konzentriert sich ausschließlich auf die effiziente Sammlung von
 
 - Python 3.8+
 - GitHub API-Token(s)
-- SQLAlchemy-kompatible Datenbank (standardmäßig SQLite)
+- SQLAlchemy-kompatible Datenbank (SQLite oder MySQL)
+
+**Unterstützte Datenbanken:**
+- SQLite (Standard): `DATABASE_URL=sqlite:///data/github_data.db`
+- MySQL: `DATABASE_URL=mysql+pymysql://user:pass@localhost/github_data`
+
+Die Umgebungsvariable `DATABASE_URL` kann in der `.env`-Datei gesetzt werden. Alle Skripte erkennen diese Variable automatisch. Alternativ kann bei den meisten Skripten der Parameter `--db-path` verwendet werden (wird automatisch zu einer SQLAlchemy-URL umgewandelt, falls nötig).
 
 ### Installation
 

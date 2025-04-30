@@ -2,7 +2,13 @@
 
 ## Übersicht
 
-Der GitHub Data Collector verwendet eine SQLite-Datenbank zur Speicherung der gesammelten Daten. Das Datenbankschema umfasst drei Haupttabellen:
+Der GitHub Data Collector verwendet eine SQLAlchemy-kompatible Datenbank (standardmäßig SQLite, optional MySQL) zur Speicherung der gesammelten Daten. Das Datenbankschema umfasst drei Haupttabellen:
+
+**Unterstützte Datenbanken:**
+- SQLite (Standard): `DATABASE_URL=sqlite:///data/github_data.db`
+- MySQL: `DATABASE_URL=mysql+pymysql://user:pass@localhost/github_data`
+
+Die Datenbank wird über die Umgebungsvariable `DATABASE_URL` konfiguriert. Alternativ kann bei den meisten Skripten der Parameter `--db-path` verwendet werden (wird automatisch zu einer SQLAlchemy-URL umgewandelt, falls nötig).
 
 1. **Contributors**: Speichert Informationen über GitHub-Benutzer (Contributors)
 2. **Organizations**: Speichert Informationen über GitHub-Organisationen

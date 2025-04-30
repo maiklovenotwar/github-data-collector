@@ -67,7 +67,11 @@ GITHUB_API_TOKEN=your_github_token
 GITHUB_API_TOKENS=token1,token2,token3
 
 # Datenbankpfad (optional, Standard: github_data.db)
+# Für SQLite (Standard):
 DATABASE_URL=sqlite:///github_data.db
+# Für MySQL:
+# DATABASE_URL=mysql+pymysql://user:pass@localhost/github_data
+# Die Variable muss eine SQLAlchemy-kompatible URL sein!
 
 # Performance-Tracking (optional, Standard: true)
 GITHUB_COLLECTOR_PERFORMANCE_TRACKING=true

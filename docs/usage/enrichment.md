@@ -15,7 +15,8 @@ Das Skript `enrich_repository_stats.py` ergänzt bestehende Repository-Datensät
 - Python 3.11 oder 3.12 (NICHT 3.13, siehe Kompatibilitätshinweise)
 - Installation aller Pakete aus `requirements.txt` (inkl. `gql[requests]` für GraphQL)
 - GitHub Personal Access Token (PAT) als Umgebungsvariable `GITHUB_API_TOKEN` setzen
-- SQLite-Datenbank mit vorhandenen Repository-Daten
+- SQLite- oder MySQL-Datenbank mit vorhandenen Repository-Daten
+- Die Datenbank wird über die Umgebungsvariable `DATABASE_URL` (z.B. `sqlite:///data/github_data.db` oder `mysql+pymysql://user:pass@localhost/github_data`) oder per `--db-path` angegeben. Der Wert für `--db-path` wird automatisch zu einer SQLAlchemy-URL umgewandelt, falls nötig.
 
 ## Kommandozeilenargumente
 - `--db-path`: Pfad zur SQLite-Datenbank
@@ -26,9 +27,14 @@ Das Skript `enrich_repository_stats.py` ergänzt bestehende Repository-Datensät
 - `--retry-failed`: Nur fehlgeschlagene Repositories erneut versuchen
 
 ## Beispielaufrufe
-**Normaler Lauf:**
+**Mit SQLite (Standard):**
 ```bash
 python scripts/enrich_repository_stats.py --db-path data/github_data.db --batch-size 50 --limit 200
+```
+**Mit MySQL (über Umgebungsvariable):**
+```bash
+export DATABASE_URL="mysql+pymysql://user:pass@localhost/github_data"
+python scripts/enrich_repository_stats.py --batch-size 50 --limit 200
 ```
 **Dry-Run:**
 ```bash
