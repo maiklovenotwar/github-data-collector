@@ -71,33 +71,21 @@ def map_and_update_stats(db_url: str, repo_stats: List[Dict[str, Any]], dry_run:
             if update_tuples:
                 if not dry_run:
                     for ut in update_tuples:
-    conn.execute(
-        text("""
-            UPDATE repositories
-            SET contributors_count = :contributors_count,
-                commits_count = :commits_count,
-                pull_requests_count = :pull_requests_count
-            WHERE id = :id
-        """),
-        ut
-    )
-    updated += 1
-logger.info(f"{len(update_tuples)} Repositories erfolgreich aktualisiert.")
+                        conn.execute(
+                            text("""
+                                UPDATE repositories
+                                SET contributors_count = :contributors_count,
+                                    commits_count = :commits_count,
+                                    pull_requests_count = :pull_requests_count
+                                WHERE id = :id
+                            """),
+                            ut
+                        )
+                        updated += 1
+                    logger.info(f"{len(update_tuples)} Repositories erfolgreich aktualisiert.")
                 else:
                     logger.info(f"DRY-RUN: {len(update_tuples)} Repositories würden aktualisiert werden.")
                     updated = len(update_tuples)
-            cursor.execute("SELECT id FROM repositories WHERE id = ?", (db_id_int,))
-            result = cursor.fetchone()
-            if result:
-                logger.debug(f"Repo mit ID {db_id_int} in DB gefunden.")
-                logger.debug(f"Update für Repo {db_id_int}: PRs={pr_count}, Commits={commit_count}, Contributors={contributor_count}")
-                update_tuples.append((pr_count, commit_count, contributor_count, db_id_int))
-                updated += 1
-                if dry_run:
-                    logger.info(f"[Dry-Run] Repo mit ID {db_id_int} WÜRDE aktualisiert: PRs={pr_count}, Commits={commit_count}, Contributors={contributor_count}")
-            else:
-                logger.warning(f"Repo mit ID {db_id_int} NICHT in DB gefunden – kein Update möglich.")
-                not_found.append(db_id_int)
 
         if not dry_run and update_tuples:
             logger.info(f"Führe 'executemany' für {len(update_tuples)} Updates aus...")
