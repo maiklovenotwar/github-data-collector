@@ -39,7 +39,7 @@ def map_and_update_stats(db_url: str, repo_stats: List[Dict[str, Any]], dry_run:
 
     try:
         engine = create_engine(db_url)
-        with engine.connect() as conn:
+        with engine.begin() as conn:
             # Debug: Zeige alle IDs in der DB (nur beim ersten Durchlauf, für Übersicht)
             result = conn.execute(text("SELECT id FROM repositories LIMIT 10"))
             ids_in_db = [row[0] for row in result.fetchall()]
@@ -70,20 +70,19 @@ def map_and_update_stats(db_url: str, repo_stats: List[Dict[str, Any]], dry_run:
             updated = 0
             if update_tuples:
                 if not dry_run:
-                    with conn.begin():
-                        for ut in update_tuples:
-                            conn.execute(
-                                text("""
-                                    UPDATE repositories
-                                    SET contributors_count = :contributors_count,
-                                        commits_count = :commits_count,
-                                        pull_requests_count = :pull_requests_count
-                                    WHERE id = :id
-                                """),
-                                ut
-                            )
-                            updated += 1
-                    logger.info(f"{len(update_tuples)} Repositories erfolgreich aktualisiert.")
+                    for ut in update_tuples:
+    conn.execute(
+        text("""
+            UPDATE repositories
+            SET contributors_count = :contributors_count,
+                commits_count = :commits_count,
+                pull_requests_count = :pull_requests_count
+            WHERE id = :id
+        """),
+        ut
+    )
+    updated += 1
+logger.info(f"{len(update_tuples)} Repositories erfolgreich aktualisiert.")
                 else:
                     logger.info(f"DRY-RUN: {len(update_tuples)} Repositories würden aktualisiert werden.")
                     updated = len(update_tuples)
@@ -118,9 +117,9 @@ def map_and_update_stats(db_url: str, repo_stats: List[Dict[str, Any]], dry_run:
         if not_found:
              logger.warning(f"{len(not_found)} Repositories aus GraphQL-Antwort wurden nicht in der DB gefunden: {not_found[:10]}...") # Zeige die ersten paar
 
-    except sqlite3.Error as e: # Spezifischer auf DB-Fehler eingehen
-        logger.error(f"SQLite Fehler beim Update-Prozess: {e}")
-        if not dry_run and 'conn' in locals() and conn.in_transaction:
+    except Exception as e:
+        logger.error(f"Fehler beim Update-Prozess: {e}", exc_info=True)
+        if not dry_run and 'conn' in locals() and hasattr(conn, 'in_transaction') and conn.in_transaction:
             try:
                 conn.rollback()
                 logger.info("Transaktion zurückgerollt.")
@@ -140,9 +139,7 @@ def map_and_update_stats(db_url: str, repo_stats: List[Dict[str, Any]], dry_run:
         if 'conn' in locals():
             conn.close()
             logger.debug("DB-Verbindung geschlossen.")
-            
+
     logger.info("Update-Prozess abgeschlossen.")
     # Gib die Anzahl der tatsächlich durchgeführten Updates zurück (im Nicht-DryRun) oder der gefundenen Matches (im DryRun)
     return len(update_tuples) if not dry_run else updated
-    logger.info("Update-Prozess abgeschlossen.")
-    return updated
