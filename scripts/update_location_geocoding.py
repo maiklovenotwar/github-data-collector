@@ -12,6 +12,13 @@ Besonderheiten:
 - Unterstützt Limitierung, erneute Geocodierung und Cache-Reset
 """
 import os
+from dotenv import load_dotenv
+
+# .env laden GANZ AM ANFANG!
+project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+dotenv_path = os.path.join(project_dir, ".env")
+load_dotenv(dotenv_path, override=True)
+
 import sys
 
 # Füge das src-Verzeichnis zum Python-Pfad hinzu
