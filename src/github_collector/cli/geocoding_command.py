@@ -254,11 +254,15 @@ def main() -> int:
         Exit-Code (0 bei Erfolg, 1 bei Fehler)
     """
     try:
+        import os
         args = parse_arguments()
-        db_path = args.db_path or config.DEFAULT_DB_PATH
+        db_path = args.db_path or os.environ.get("DATABASE_URL") or config.DEFAULT_DB_PATH
+        # Falls es noch keine SQLAlchemy-URL ist, baue eine daraus
+        if isinstance(db_path, str) and not (db_path.startswith("sqlite:///") or "://" in db_path):
+            db_path = f"sqlite:///{db_path}"
+        db = GitHubDatabase(str(db_path))
         cache_file = args.cache_file
         user_agent = args.user_agent
-        db = GitHubDatabase(str(db_path))
         geocoder = GeocodingService(cache_file=cache_file, user_agent=user_agent)
 
         # Optionally clear the geocoding cache if requested
