@@ -5,6 +5,13 @@ Skript zum Sammeln von GitHub-Repositories.
 Dieses Skript bietet einen interaktiven und nicht-interaktiven Modus zur Sammlung von GitHub-Repositories mit Unterstützung für Star-Range-Filter, Zeitbereiche und weitere Optionen.
 """
 import os
+from dotenv import load_dotenv
+
+# .env laden GANZ AM ANFANG!
+project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+dotenv_path = os.path.join(project_dir, ".env")
+load_dotenv(dotenv_path, override=True)
+
 import sys
 import argparse
 from datetime import datetime, timedelta
