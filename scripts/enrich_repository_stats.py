@@ -26,7 +26,8 @@ logger = setup_logging(log_file=ENRICH_LOG)
 from tqdm import tqdm
 from github_collector.enrichment.graphql_handler import GraphQLHandler
 from github_collector.enrichment.updater import map_and_update_stats
-import sqlite3
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine.url import make_url
 
 # .env laden (wie im Projekt üblich)
 try:
@@ -39,36 +40,38 @@ except ImportError:
     logging.warning("python-dotenv nicht installiert, überspringe .env-Laden")
 
 
-def get_repos_to_enrich(db_path, limit=None, force=False):
+def get_repos_to_enrich(db_url, limit=None, force=False):
     """
     Holt Repos aus der DB, die angereichert werden sollen.
-    :param db_path: Pfad zur SQLite-DB
+    :param db_url: SQLAlchemy-DB-URL
     :param limit: maximale Anzahl
     :param force: Wenn True, ignoriere NULL-Check (alle Repos)
     :return: Liste von Dicts mit id, owner, name
     """
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    # Owner-Name dynamisch aus organizations ODER contributors holen
-    if force:
-        query = ("SELECT r.id, COALESCE(o.login, c.login) as owner, r.name "
-                 "FROM repositories r "
-                 "LEFT JOIN organizations o ON r.owner_id = o.id "
-                 "LEFT JOIN contributors c ON r.owner_id = c.id")
-        params = ()
-    else:
-        query = ("SELECT r.id, COALESCE(o.login, c.login) as owner, r.name "
-                 "FROM repositories r "
-                 "LEFT JOIN organizations o ON r.owner_id = o.id "
-                 "LEFT JOIN contributors c ON r.owner_id = c.id "
-                 "WHERE r.contributors_count IS NULL OR r.commits_count IS NULL OR r.pull_requests_count IS NULL")
-        params = ()
-    if limit:
-        query += " LIMIT ?"
-        params = params + (limit,)
-    cursor.execute(query, params)
-    rows = cursor.fetchall()
-    conn.close()
+    engine = create_engine(db_url)
+    with engine.connect() as conn:
+        if force:
+            query = text("""
+                SELECT r.id, COALESCE(o.login, c.login) as owner, r.name
+                FROM repositories r
+                LEFT JOIN organizations o ON r.owner_id = o.id
+                LEFT JOIN contributors c ON r.owner_id = c.id
+            """)
+            params = {}
+        else:
+            query = text("""
+                SELECT r.id, COALESCE(o.login, c.login) as owner, r.name
+                FROM repositories r
+                LEFT JOIN organizations o ON r.owner_id = o.id
+                LEFT JOIN contributors c ON r.owner_id = c.id
+                WHERE r.contributors_count IS NULL OR r.commits_count IS NULL OR r.pull_requests_count IS NULL
+            """)
+            params = {}
+        if limit:
+            query = text(str(query) + " LIMIT :limit")
+            params['limit'] = limit
+        result = conn.execute(query, params)
+        rows = result.fetchall()
     return [{"id": r[0], "owner": r[1], "name": r[2]} for r in rows]
 
 def main():
@@ -94,11 +97,15 @@ def main():
     args = parser.parse_args()
 
     # Ermittle Datenbankpfad wie in den anderen Skripten
-    if args.db_path:
-        db_path = args.db_path
-    else:
-        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        db_path = os.path.join(project_dir, "data", "github_data.db")
+    # Hole die Datenbank-URL aus der Umgebung (wie in den anderen Skripten)
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        if args.db_path:
+            # Fallback auf SQLite, falls explizit angegeben
+            db_url = f"sqlite:///{args.db_path}"
+        else:
+            project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            db_url = f"sqlite:///{os.path.join(project_dir, 'data', 'github_data.db')}"
 
     logger.info("Starte Enrichment-Prozess...")
     if args.retry_failed:
