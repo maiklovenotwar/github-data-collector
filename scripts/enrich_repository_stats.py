@@ -169,7 +169,7 @@ def main():
         if "database_id" in stat and stat["database_id"] in db_id_set:
             stats_for_update.append(stat)
 
-    updated = map_and_update_stats(db_path, stats_for_update, dry_run=args.dry_run)
+    updated = map_and_update_stats(db_url, stats_for_update, dry_run=args.dry_run)
 
     logger.info("==== Zusammenfassung ====")
     logger.info(f"Repos ausgewählt: {len(repos)}")
