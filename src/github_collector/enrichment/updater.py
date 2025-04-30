@@ -55,9 +55,17 @@ def map_and_update_stats(db_url: str, repo_stats: List[Dict[str, Any]], dry_run:
                     if key in stat and stat[key] is not None:
                         database_id_value = stat[key]
                         logger.debug(f"ID-Schlüssel gefunden: '{key}' mit Wert {database_id_value}")
+                        break
                 if database_id_value is None:
                     logger.warning(f"Kein gültiger Repo-ID-Schlüssel in Stat: {stat}")
                     continue
+                # NUR numerische IDs akzeptieren!
+                if not isinstance(database_id_value, int):
+                    try:
+                        database_id_value = int(database_id_value)
+                    except Exception:
+                        logger.warning(f"Repo-Stat mit nicht-numerischer ID übersprungen: {stat}")
+                        continue
                 update_tuple = {
                     "contributors_count": stat.get("calculated_contributor_count"),
                     "commits_count": stat.get("calculated_commit_count"),
