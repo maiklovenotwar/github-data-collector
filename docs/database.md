@@ -29,7 +29,7 @@ Die `contributors`-Tabelle speichert Informationen über GitHub-Benutzer.
 | company | String | Unternehmen des Contributors |
 | blog | String | Blog oder Website des Contributors |
 | location | String | Standort des Contributors |
-| bio | String | Biografie des Contributors |
+| bio | TEXT | Biografie des Contributors (beliebig lang) |
 | twitter_username | String | Twitter-Benutzername des Contributors |
 | public_repos | Integer | Anzahl der öffentlichen Repositories |
 | public_gists | Integer | Anzahl der öffentlichen Gists |
@@ -52,7 +52,7 @@ Die `organizations`-Tabelle speichert Informationen über GitHub-Organisationen.
 | login | String | GitHub-Benutzername der Organisation |
 | name | String | Name der Organisation |
 | email | String | E-Mail-Adresse der Organisation |
-| description | String | Beschreibung der Organisation |
+| description | TEXT | Beschreibung der Organisation (beliebig lang) |
 | blog | String | Blog oder Website der Organisation |
 | location | String | Standort der Organisation |
 | twitter_username | String | Twitter-Benutzername der Organisation |
@@ -76,7 +76,7 @@ Die `repositories`-Tabelle speichert Informationen über GitHub-Repositories.
 | id | Integer | Primärschlüssel, GitHub-ID des Repositories |
 | name | String | Name des Repositories |
 | full_name | String | Vollständiger Name des Repositories (owner/name) |
-| description | String | Beschreibung des Repositories |
+| description | TEXT | Beschreibung des Repositories (beliebig lang, MySQL: TEXT/LONGTEXT) |
 | homepage | String | Homepage des Repositories |
 | language | String | Hauptsprache des Repositories |
 | fork | Boolean | Gibt an, ob das Repository ein Fork ist |

@@ -9,6 +9,8 @@ from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime,
     ForeignKey, Text, create_engine, func, desc
 )
+from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import relationship, declarative_base, sessionmaker
 
 logger = logging.getLogger(__name__)
@@ -81,7 +83,15 @@ class Repository(Base):
     organization_id = Column(Integer, ForeignKey('organizations.id'))
     
     # Metadaten
-    description = Column(Text)
+    @declared_attr
+    def description(cls):
+        from sqlalchemy import inspect
+        def column_type(context):
+            bind = context.get_bind()
+            if bind and bind.dialect.name == 'mysql':
+                return LONGTEXT()
+            return Text()
+        return Column(column_type, nullable=True)
     homepage = Column(String(255))
     language = Column(String(100))
     private = Column(Boolean, default=False)
