@@ -47,3 +47,9 @@ env/
 
 # Misc
 .DS_Store
+
+# Generated files and directories
+exports/
+collection_state.json
+geocoding_cache.json
+data/
