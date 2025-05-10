@@ -24,6 +24,7 @@ Dieses Projekt konzentriert sich ausschließlich auf die effiziente Sammlung von
   - Token-Pool-Management für die Handhabung von GitHub API-Ratenlimits
   - Intelligentes Caching-System zur Reduzierung von API-Aufrufen
   - Fortschrittsverfolgung mit Wiederaufnahmefähigkeit
+  - **Verbesserte Nebenläufigkeit für SQLite**: Der standardmäßig aktivierte WAL-Modus (Write-Ahead Logging) für SQLite-Datenbanken reduziert Sperrkonflikte erheblich und ermöglicht eine stabilere parallele Ausführung von Sammel- und Anreicherungsskripten.
 - **Einfacher Datenexport**: Export der gesammelten Daten in CSV-Dateien für externe Analysen
 
 ## 🚀 Erste Schritte
@@ -70,6 +71,14 @@ python scripts/update_location_geocoding.py
 
 # Daten in CSV-Dateien exportieren
 python scripts/export_tables_to_csv.py
+
+# --- Parallele Ausführung (Empfohlen für SQLite) ---
+# Aufgrund des aktivierten WAL-Modus für SQLite können das Sammeln von Repositories
+# und die Geokodierung nun effizient parallel ausgeführt werden, um Zeit zu sparen:
+# Terminal 1:
+# python scripts/collect_repositories.py --interactive 
+# Terminal 2:
+# python scripts/update_location_geocoding.py
 ```
 
 ## 📊 Datenmodell
@@ -147,6 +156,7 @@ This project focuses exclusively on efficient data collection:
   - Token pool management for handling GitHub API rate limits
   - Intelligent caching system to reduce API calls
   - Progress tracking with resume capability
+  - **Improved Concurrency for SQLite**: Write-Ahead Logging (WAL) mode is enabled by default for SQLite databases, significantly reducing locking contention and allowing for more stable parallel execution of collection and enrichment scripts.
 - **Easy data export**: Export collected data to CSV files for external analysis
 
 ## 🚀 Getting Started
@@ -187,6 +197,14 @@ python scripts/update_location_geocoding.py
 
 # Export data to CSV files
 python scripts/export_tables_to_csv.py
+
+# --- Parallel Execution (Recommended for SQLite) ---
+# Due to the enabled WAL mode for SQLite, repository collection and geocoding
+# can now be run efficiently in parallel to save time:
+# Terminal 1:
+# python scripts/collect_repositories.py --interactive
+# Terminal 2:
+# python scripts/update_location_geocoding.py
 ```
 
 ## 📊 Data Model
