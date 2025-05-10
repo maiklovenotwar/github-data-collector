@@ -5,7 +5,7 @@ import logging
 from typing import Optional, List, Dict, Tuple, Any, Union
 from datetime import datetime
 
-from sqlalchemy import create_engine, func, desc
+from sqlalchemy import create_engine, func, text, event, desc
 from sqlalchemy.orm import sessionmaker, Session
 
 from .models import Base, Repository, Contributor, Organization
@@ -30,8 +30,25 @@ def init_db(database_url: str, reset_db: bool = False) -> sessionmaker:
             except Exception as e:
                 logger.error(f"Fehler beim Entfernen der Datenbankdatei: {e}")
     
-    # Engine erstellen und Tabellen erstellen
+    # Engine erstellen
     engine = create_engine(database_url)
+
+    # WAL-Modus für SQLite aktivieren, um die Nebenläufigkeit zu verbessern
+    if database_url.startswith('sqlite:///'):
+        try:
+            with engine.connect() as connection:
+                connection.execute(text("PRAGMA journal_mode=WAL;"))
+                connection.commit() # Sicherstellen, dass die PRAGMA-Änderung übernommen wird
+                
+                # Überprüfen, ob WAL wirklich aktiviert wurde
+                result = connection.execute(text("PRAGMA journal_mode;")).scalar_one_or_none()
+                if result and result.lower() == 'wal':
+                    logger.info(f"SQLite WAL-Modus erfolgreich aktiviert und verifiziert (aktueller Modus: {result}).")
+                else:
+                    logger.warning(f"SQLite WAL-Modus-Aktivierung angefordert, aber aktueller Modus ist: {result}. Überprüfen Sie die Konfiguration.")
+        except Exception as e:
+            logger.error(f"Fehler beim Aktivieren oder Verifizieren des SQLite WAL-Modus: {e}")
+
     logger.info("Erstelle Datenbanktabellen, falls sie nicht existieren...")
     Base.metadata.create_all(engine)
     
