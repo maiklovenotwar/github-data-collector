@@ -2,9 +2,11 @@
 """
 Hilfsskript zum Zurücksetzen der Datenbank und Ausführen der Repository-Sammlung.
 
-Dieses Skript ist ein Wrapper für die CLI-Funktionalität des GitHub Data Collectors.
-Es verwendet die Implementierung aus dem cli-Modul, um die Datenbank zurückzusetzen
-und die Repository-Sammlung durchzuführen.
+Dieses Skript implementiert eine erweiterte Logik zum Zurücksetzen verschiedener
+Datenbanktypen (SQLite und MySQL). Für MySQL wird die Datenbank gelöscht (DROP DATABASE)
+und neu erstellt (CREATE DATABASE). Anschließend wird die Funktion `init_db` aus
+`github_collector.database.database` verwendet, um das Datenbankschema zu initialisieren.
+Danach wird die Repository-Sammlung über `collect_repositories.py` gestartet.
 """
 import os
 import sys
@@ -19,7 +21,8 @@ from sqlalchemy import text
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 
 from github_collector.database.database import init_db
-from github_collector.cli.reset_command import main
+# reset_command.main wird nicht verwendet, da dieses Skript eine eigene, erweiterte Reset-Logik hat.
+# from github_collector.cli.reset_command import main as reset_command_main 
 from github_collector.utils.logging_config import setup_logging
 
 from github_collector.config import RESET_LOG
@@ -65,17 +68,6 @@ def reset_database():
 
     else:
         logger.error(f"Reset für Datenbanktyp {url.drivername} nicht implementiert.")
-        return False
-
-
-    
-    # Initialisiere die Datenbank neu
-    try:
-        init_db(db_url)
-        logger.info("Datenbank erfolgreich zurückgesetzt und neu initialisiert")
-        return True
-    except Exception as e:
-        logger.error(f"Fehler bei der Datenbank-Initialisierung: {e}")
         return False
 
 

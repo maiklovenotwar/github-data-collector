@@ -64,11 +64,29 @@ def main() -> int:
         logger.warning("python-dotenv nicht installiert, überspringe .env-Laden")
     
     try:
-        # Datenbankpfad
-        db_path = args.db_path or config.DEFAULT_DB_PATH
+        # Datenbankpfad bestimmen
+        db_url = os.environ.get("DATABASE_URL")
+        resolved_db_path = None
+
+        if db_url:
+            resolved_db_path = db_url
+        elif args.db_path:
+            resolved_db_path = args.db_path
+        else:
+            resolved_db_path = config.DEFAULT_DB_PATH
+
+        # Sicherstellen, dass es eine gültige URL für SQLite ist, falls es nur ein Pfad ist
+        if not (":///" in resolved_db_path or "://" in resolved_db_path): # Einfache Prüfung, ob es wie eine URL aussieht
+            # Prüfen, ob der Pfad relativ ist und ihn zum Projektverzeichnis auflösen
+            if not os.path.isabs(resolved_db_path):
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                resolved_db_path = os.path.join(project_root, resolved_db_path)
+            resolved_db_path = f"sqlite:///{resolved_db_path}"
+
+        logger.info(f"Verwende Datenbank-URL: {resolved_db_path}")
         
         # Initialisiere Datenbank
-        db = GitHubDatabase(str(db_path))
+        db = GitHubDatabase(resolved_db_path)
         
         # Bestimme die zu exportierenden Tabellen
         tables = []

@@ -85,13 +85,9 @@ class Repository(Base):
     # Metadaten
     @declared_attr
     def description(cls):
-        from sqlalchemy import inspect
-        def column_type(context):
-            bind = context.get_bind()
-            if bind and bind.dialect.name == 'mysql':
-                return LONGTEXT()
-            return Text()
-        return Column(column_type, nullable=True)
+        # Verwendet standardmäßig Text, mit LONGTEXT als Variante für den MySQL-Dialekt.
+        return Column(Text().with_variant(LONGTEXT(), "mysql"), nullable=True)
+
     homepage = Column(String(255))
     language = Column(String(100))
     private = Column(Boolean, default=False)
