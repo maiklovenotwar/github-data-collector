@@ -9,3 +9,4 @@ pymysql
 cryptography
 gql[requests]
 tqdm
+PyGithub==2.6.1

@@ -9,6 +9,7 @@ import sys
 import logging
 import argparse
 from typing import List, Optional
+from pathlib import Path
 
 from github_collector import config
 from github_collector.database.database import GitHubDatabase
@@ -56,7 +57,6 @@ def main() -> int:
     # Lade Umgebungsvariablen aus .env-Datei, falls verfügbar
     try:
         from dotenv import load_dotenv
-        import os
         project_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         dotenv_path = os.path.join(project_dir, ".env")
         load_dotenv(dotenv_path, override=True)
@@ -65,28 +65,29 @@ def main() -> int:
     
     try:
         # Datenbankpfad bestimmen
-        db_url = os.environ.get("DATABASE_URL")
-        resolved_db_path = None
+        # Priorität: 1. Umgebungsvariable DATABASE_URL, 2. --db-path Argument, 3. config.DEFAULT_DB_PATH
+        db_path_or_url = os.getenv('DATABASE_URL')
+        source = "Umgebungsvariable DATABASE_URL"
 
-        if db_url:
-            resolved_db_path = db_url
-        elif args.db_path:
-            resolved_db_path = args.db_path
-        else:
-            resolved_db_path = config.DEFAULT_DB_PATH
+        if not db_path_or_url:
+            if args.db_path:
+                db_path_or_url = args.db_path
+                source = "--db-path Argument"
+            else:
+                db_path_or_url = str(config.DEFAULT_DB_PATH) # Sicherstellen, dass es ein String ist
+                source = "config.DEFAULT_DB_PATH"
+        
+        logger.info(f"Verwende Datenbank von: {source} ('{db_path_or_url}')")
 
-        # Sicherstellen, dass es eine gültige URL für SQLite ist, falls es nur ein Pfad ist
-        if not (":///" in resolved_db_path or "://" in resolved_db_path): # Einfache Prüfung, ob es wie eine URL aussieht
-            # Prüfen, ob der Pfad relativ ist und ihn zum Projektverzeichnis auflösen
-            if not os.path.isabs(resolved_db_path):
-                project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                resolved_db_path = os.path.join(project_root, resolved_db_path)
-            resolved_db_path = f"sqlite:///{resolved_db_path}"
-
-        logger.info(f"Verwende Datenbank-URL: {resolved_db_path}")
+        # Sicherstellen, dass es eine gültige SQLAlchemy-URL ist
+        final_db_url = str(db_path_or_url) # Nochmal sicherstellen, dass es ein String ist
+        if "://" not in final_db_url and not final_db_url.startswith("sqlite:///") and final_db_url != ":memory:":
+            # Es ist wahrscheinlich ein lokaler Pfad, der das Präfix 'sqlite:///' benötigt.
+            final_db_url = f"sqlite:///{final_db_url}"
+            logger.info(f"Konvertiere Pfad zu SQLAlchemy URL: {final_db_url}")
         
         # Initialisiere Datenbank
-        db = GitHubDatabase(resolved_db_path)
+        db = GitHubDatabase(final_db_url)
         
         # Bestimme die zu exportierenden Tabellen
         tables = []

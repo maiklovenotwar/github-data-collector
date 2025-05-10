@@ -83,11 +83,7 @@ class Repository(Base):
     organization_id = Column(Integer, ForeignKey('organizations.id'))
     
     # Metadaten
-    @declared_attr
-    def description(cls):
-        # Verwendet standardmäßig Text, mit LONGTEXT als Variante für den MySQL-Dialekt.
-        return Column(Text().with_variant(LONGTEXT(), "mysql"), nullable=True)
-
+    description = Column(Text().with_variant(LONGTEXT(), "mysql"), nullable=True)
     homepage = Column(String(255))
     language = Column(String(100))
     private = Column(Boolean, default=False)

@@ -400,11 +400,12 @@ class RepositoryCollector:
         show_collection_summary(total_collected)
         collection_end_time = perf_counter()
         collection_time = collection_end_time - collection_start_time
-        print(f"\n\u23F0 Gesamtzeit: {collection_time:.2f} Sekunden für {total_collected} Repositories")
+        collection_time_min = collection_time / 60
+        print(f"\n\u23F0 Gesamtzeit: {collection_time_min:.2f} Minuten für {total_collected} Repositories")
         if total_collected > 0:
             print(f"   Durchschnitt gesamt: {collection_time / total_collected:.2f} Sekunden pro Repository")
-        print(f"   Reine Verarbeitungszeit: {self.__class__._total_processing_time:.2f} Sekunden")
-        print(f"   Overhead (API, Suche, etc.): {collection_time - self.__class__._total_processing_time:.2f} Sekunden")
+        print(f"   Reine Verarbeitungszeit: {(self.__class__._total_processing_time / 60):.2f} Minuten") # Korrigiert: In Minuten
+        print(f"   Overhead (API, Suche, etc.): {(collection_time - self.__class__._total_processing_time) / 60:.2f} Minuten")
         return total_collected
 
     def _collect_repositories_in_period_by_star_range(self, start_date: datetime, end_date: datetime, 
@@ -904,12 +905,13 @@ class RepositoryCollector:
         # Ende der Zeitmessung für den gesamten Sammelprozess
         collection_end_time = perf_counter()
         collection_time = collection_end_time - collection_start_time
+        collection_time_min = collection_time / 60
         
         # Zeige Performance-Informationen für den gesamten Sammelprozess an
-        print(f"\n\u23F0 Gesamtzeit: {collection_time:.2f} Sekunden für {total_collected} Repositories")
+        print(f"\n\u23F0 Gesamtzeit: {collection_time_min:.2f} Minuten für {total_collected} Repositories")
         if total_collected > 0:
             print(f"   Durchschnitt gesamt: {collection_time / total_collected:.2f} Sekunden pro Repository")
-        print(f"   Reine Verarbeitungszeit: {self.__class__._total_processing_time:.2f} Sekunden")
-        print(f"   Overhead (API, Suche, etc.): {collection_time - self.__class__._total_processing_time:.2f} Sekunden")
+        print(f"   Reine Verarbeitungszeit: {(self.__class__._total_processing_time / 60):.2f} Minuten") # Korrigiert: In Minuten
+        print(f"   Overhead (API, Suche, etc.): {(collection_time - self.__class__._total_processing_time) / 60:.2f} Minuten")
         
         return total_collected

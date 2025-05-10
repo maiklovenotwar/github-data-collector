@@ -6,6 +6,7 @@ Dieses Skript bietet einen interaktiven und nicht-interaktiven Modus zur Sammlun
 """
 import os
 from dotenv import load_dotenv
+import math
 
 # .env laden GANZ AM ANFANG!
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -195,10 +196,45 @@ def interactive_mode(args, api_client, db):
             return
         use_range = False
 
-    # Frage nach Anzahl der Perioden
-    time_diff = end_date - start_date
-    days_total = time_diff.days
-    if days_total <= 7:
+    # === NEUER TEIL START: Gesamtzahl der Repos ermitteln und anzeigen ===
+    logger.info("Ermittle Gesamtzahl der passenden Repositories für die Periodenberechnung...")
+    total_matching_repos = 0
+    try:
+        # Query-String für die Zählung erstellen
+        query_parts = []
+        date_format = "%Y-%m-%dT%H:%M:%SZ"
+        query_parts.append(f"created:{start_date.strftime(date_format)}..{end_date.strftime(date_format)}")
+        
+        if use_range:
+            query_parts.append(f"stars:{min_stars}..{max_stars}")
+        else:
+            query_parts.append(f"stars:>={min_stars}")
+            
+        initial_query = " ".join(query_parts)
+        logger.debug(f"Initial-Query für Total Count: {initial_query}")
+        
+        # Verwende den GitHub-API-Client, um die Gesamtzahl zu erhalten
+        # Wir brauchen hier Zugriff auf den Collector oder direkt den api_client
+        # Annahme: api_client ist im Scope von interactive_mode verfügbar
+        search_result = api_client.search_repositories(query=initial_query, sort='stars', order='desc', per_page=1)
+        total_matching_repos = search_result['total_count'] # Korrigierter Zugriff
+        
+        print(f"\nInsgesamt gefundene Repositories im Zeitraum {start_date.strftime('%Y-%m-%d')} bis {end_date.strftime('%Y-%m-%d')} mit den gewählten Stern-Kriterien: {total_matching_repos}")
+        
+    except Exception as e:
+        logger.warning(f"Fehler beim Ermitteln der Gesamtzahl der Repositories: {e}")
+        print("Warnung: Konnte die Gesamtzahl der passenden Repositories nicht ermitteln. Der Periodenvorschlag basiert auf der Zeitspanne.")
+    # === NEUER TEIL ENDE ===
+
+    # Tage im Zeitraum berechnen
+    days_total = (end_date - start_date).days
+    
+    # Vorschlag für Periodenanzahl (angepasst)
+    if total_matching_repos > 0:
+        default_periods = math.ceil(total_matching_repos / 990) # 990 als Puffer für das 1000er Limit
+        if default_periods == 0: default_periods = 1 # Mindestens eine Periode
+        print(f"Basierend auf {total_matching_repos} gefundenen Repositories und dem API-Limit wird eine Aufteilung in ca. {default_periods} Perioden empfohlen.")
+    elif days_total <= 7:
         default_periods = 1
     elif days_total <= 30:
         default_periods = 3
@@ -330,10 +366,6 @@ def non_interactive_mode(args, api_client, db):
                 max_repos=limit,
                 resume=True
             )
-    except KeyboardInterrupt:
-        print("\nSammlung unterbrochen. Der Fortschritt wurde gespeichert und kann später fortgesetzt werden.")
-    except Exception as e:
-        logger.error(f"Fehler bei der Repository-Sammlung: {e}")
     except KeyboardInterrupt:
         print("\nSammlung unterbrochen. Der Fortschritt wurde gespeichert und kann später fortgesetzt werden.")
     except Exception as e:
